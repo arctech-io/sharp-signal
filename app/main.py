@@ -52,66 +52,70 @@ async def _poll_cycle(engine: DetectionEngine) -> None:
 
     logger.info("Poll cycle starting")
 
-    try:
-        async with TxLineClient() as client:
+    if not settings.txline_base_url:
+        logger.debug("TXLINE_BASE_URL not configured — skipping poll cycle")
+        return
+
+    async with TxLineClient() as client:
+        try:
             odds_updates = await client.fetch_all_odds()
-    except TxLineError:
-        logger.exception("Failed to fetch odds from TxLINE — will retry next cycle")
-        return
-    except Exception:
-        logger.exception("Unexpected error fetching odds — will retry next cycle")
-        return
+        except TxLineError:
+            logger.exception("Failed to fetch odds from TxLINE — will retry next cycle")
+            return
+        except Exception:
+            logger.exception("Unexpected error fetching odds — will retry next cycle")
+            return
 
-    if not odds_updates:
-        logger.info("No odds updates received this cycle")
-        return
+        if not odds_updates:
+            logger.info("No odds updates received this cycle")
+            return
 
-    logger.info("Received %d odds updates", len(odds_updates))
+        logger.info("Received %d odds updates", len(odds_updates))
 
-    # Run detection and persist
-    db = SessionLocal()
-    signals_created = 0
-    try:
-        for update in odds_updates:
-            try:
-                # Save the raw odds update
-                save_odds_update(db, update)
+        # Run detection and persist
+        db = SessionLocal()
+        signals_created = 0
+        try:
+            for update in odds_updates:
+                try:
+                    # Save the raw odds update
+                    save_odds_update(db, update)
 
-                # Run detection
-                signal = engine.process(update)
-                if signal is not None:
-                    save_signal(db, signal)
-                    signals_created += 1
-                    logger.info(
-                        "Signal created: id=%s match=%s market=%s selection=%s "
-                        "direction=%s confidence=%.1f reason=%s",
-                        signal.id,
-                        signal.match_id,
-                        signal.market,
-                        signal.selection,
-                        signal.direction.value,
-                        signal.confidence,
-                        signal.reason,
+                    # Run detection
+                    signal = engine.process(update)
+                    if signal is not None:
+                        save_signal(db, signal)
+                        signals_created += 1
+                        logger.info(
+                            "Signal created: id=%s match=%s market=%s selection=%s "
+                            "direction=%s confidence=%.1f reason=%s",
+                            signal.id,
+                            signal.match_id,
+                            signal.market,
+                            signal.selection,
+                            signal.direction.value,
+                            signal.confidence,
+                            signal.reason,
+                        )
+                except Exception:
+                    logger.exception(
+                        "Error processing update for match=%s market=%s selection=%s",
+                        update.match_id,
+                        update.market,
+                        update.selection,
                     )
-            except Exception:
-                logger.exception(
-                    "Error processing update for match=%s market=%s selection=%s",
-                    update.match_id,
-                    update.market,
-                    update.selection,
-                )
-    finally:
-        db.close()
+        finally:
+            db.close()
 
-    # Resolve any pending signals
-    resolve_db = SessionLocal()
-    try:
-        resolved = await resolve_all_pending(client, resolve_db)
-    except Exception:
-        logger.exception("Error during signal resolution")
-        resolved = 0
-    finally:
-        resolve_db.close()
+        # Resolve any pending signals
+        resolve_db = SessionLocal()
+        try:
+            resolved = await resolve_all_pending(client, resolve_db)
+        except Exception:
+            logger.exception("Error during signal resolution")
+            resolved = 0
+        finally:
+            resolve_db.close()
 
     _last_successful_poll = datetime.now(timezone.utc)
     logger.info(
@@ -156,7 +160,6 @@ async def _background_loop(shutdown_event: asyncio.Event) -> None:
 # ---------------------------------------------------------------------------
 
 _background_task: asyncio.Task | None = None
-_shutdown_event: asyncio.Event = asyncio.Event()
 
 
 @asynccontextmanager
@@ -164,17 +167,17 @@ async def lifespan(app: FastAPI):
     """Manage startup and shutdown of the background polling loop."""
     global _background_task
 
+    shutdown_event = asyncio.Event()
+
     logger.info("Initializing database")
     init_db()
-
-    _shutdown_event.clear()
     logger.info("Starting background poll loop")
-    _background_task = asyncio.create_task(_background_loop(_shutdown_event))
+    _background_task = asyncio.create_task(_background_loop(shutdown_event))
 
     yield
 
     logger.info("Shutting down background poll loop")
-    _shutdown_event.set()
+    shutdown_event.set()
     if _background_task:
         try:
             await asyncio.wait_for(_background_task, timeout=30)
