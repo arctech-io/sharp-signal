@@ -223,10 +223,56 @@
       font-size: 12px; color: var(--text-faint);
     }
 
+    /* ----- Tablet ----- */
+    @media (max-width: 900px) {
+      .container { padding: 44px 20px 72px; }
+      .hero-stats { gap: 28px; }
+    }
+
+    /* ----- Mobile ----- */
     @media (max-width: 640px) {
-      .onboarding .terms { grid-template-columns: 1fr; }
-      .hero-stats { gap: 24px; }
-      .signal-meta { gap: 14px; }
+      .container { padding: 28px 14px 56px; }
+      header { margin-bottom: 28px; gap: 10px; }
+      header h1 { font-size: 17px; }
+      .status-pill { font-size: 11px; padding: 4px 9px; }
+
+      .onboarding { padding: 20px 18px; margin-bottom: 24px; }
+      .onboarding p { font-size: 13px; }
+      .onboarding .terms { grid-template-columns: 1fr; gap: 10px; }
+
+      .hero {
+        flex-direction: column; align-items: flex-start; gap: 18px;
+        padding: 20px 18px; margin-bottom: 28px;
+      }
+      .hero .metric-value { font-size: 38px; }
+      .hero-stats { gap: 22px; width: 100%; justify-content: space-between; }
+
+      .section-head { margin-bottom: 14px; }
+      .section-head h3 { font-size: 14px; }
+
+      .match-head { padding: 14px 16px; gap: 8px; }
+      .match-teams { font-size: 13.5px; }
+      .kickoff { margin-left: 0; width: 100%; order: 3; font-size: 12px; }
+
+      .signal-row {
+        flex-wrap: wrap; gap: 12px; padding: 16px;
+        align-items: center;
+      }
+      .signal-main { min-width: 0; flex-basis: 100%; order: 2; }
+      .badge { order: 1; align-self: flex-end; margin-left: auto; }
+      .signal-tags { gap: 7px; }
+      .signal-meta { gap: 12px 16px; }
+      .signal-meta .item { font-size: 12px; }
+      .explain { font-size: 12.5px; padding: 10px 12px; }
+    }
+
+    /* ----- Small mobile ----- */
+    @media (max-width: 420px) {
+      .container { padding: 22px 10px 48px; }
+      .hero-stats { gap: 14px; }
+      .hero-stats .stat .n { font-size: 19px; }
+      .conf { width: 42px; height: 42px; font-size: 12px; }
+      .signal-meta { gap: 10px 12px; }
     }
   </style>
 </head>
@@ -249,11 +295,11 @@
       <div class="terms">
         <div class="term">
           <div class="label">Shortening</div>
-          <div class="val"><span class="g">Odds decreased</span> — the outcome is now considered more likely.</div>
+          <div class="val"><span class="g">Price rose</span> — the outcome is now considered more likely.</div>
         </div>
         <div class="term">
           <div class="label">Drifting</div>
-          <div class="val"><span class="r">Odds increased</span> — the outcome is now considered less likely.</div>
+          <div class="val"><span class="r">Price fell</span> — the outcome is now considered less likely.</div>
         </div>
         <div class="term">
           <div class="label">Confidence</div>
