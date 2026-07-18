@@ -20,39 +20,86 @@
       padding: 32px 24px;
     }
 
-    /* ---- Header ---- */
     header {
       display: flex;
-      align-items: baseline;
-      gap: 16px;
-      margin-bottom: 32px;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
     }
     header h1 {
       font-size: 22px;
       font-weight: 600;
-      letter-spacing: -0.3px;
     }
-    header .tag {
+    .live-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #3fb950;
+      display: inline-block;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .header-sub {
+      font-size: 13px;
+      color: #8b949e;
+      margin-left: auto;
+    }
+
+    .explainer-card {
+      background: linear-gradient(135deg, #161b22 0%, #1c2330 100%);
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #c9d1d9;
+    }
+    .explainer-card strong {
+      color: #f0f6fc;
+    }
+    .explainer-card .highlight-green { color: #3fb950; }
+    .explainer-card .highlight-red { color: #f85149; }
+    .explainer-card .row {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .explainer-card .term {
+      flex: 1;
+      min-width: 160px;
+      background: #0d1117;
+      border-radius: 8px;
+      padding: 12px 16px;
+      border: 1px solid #21262d;
+    }
+    .explainer-card .term-label {
       font-size: 11px;
-      font-weight: 500;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       color: #8b949e;
-      background: #1c2028;
-      padding: 3px 8px;
-      border-radius: 4px;
+      margin-bottom: 2px;
+    }
+    .explainer-card .term-value {
+      font-size: 14px;
+      font-weight: 500;
     }
 
-    /* ---- Accuracy hero ---- */
     .hero {
       background: #161b22;
       border: 1px solid #21262d;
       border-radius: 12px;
-      padding: 28px 32px;
-      margin-bottom: 28px;
+      padding: 24px 28px;
+      margin-bottom: 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
     }
     .hero-left .label {
       font-size: 13px;
@@ -62,7 +109,7 @@
       margin-bottom: 4px;
     }
     .hero-left .value {
-      font-size: 48px;
+      font-size: 42px;
       font-weight: 700;
       letter-spacing: -1.5px;
       line-height: 1;
@@ -79,7 +126,6 @@
     }
     .hero-right span { color: #e1e4e8; font-weight: 500; }
 
-    /* ---- Signals ---- */
     .section-title {
       font-size: 13px;
       font-weight: 600;
@@ -87,7 +133,17 @@
       letter-spacing: 0.6px;
       color: #8b949e;
       margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
+    .section-title .count {
+      font-size: 11px;
+      color: #484f58;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
     .signals-list {
       display: flex;
       flex-direction: column;
@@ -98,36 +154,55 @@
       border: 1px solid #21262d;
       border-radius: 10px;
       padding: 16px 20px;
-      display: grid;
-      grid-template-columns: 56px 1fr auto;
-      align-items: center;
-      gap: 16px;
       transition: border-color 0.15s;
     }
     .signal-card:hover { border-color: #388bfd44; }
 
+    .signal-top {
+      display: grid;
+      grid-template-columns: 48px 1fr auto;
+      gap: 14px;
+      align-items: start;
+    }
+
     .confidence-badge {
-      width: 52px;
-      height: 52px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 15px;
+      font-size: 13px;
       font-weight: 700;
       flex-shrink: 0;
+      position: relative;
     }
     .confidence-badge.high { background: #0d2818; color: #3fb950; border: 2px solid #238636; }
     .confidence-badge.mid  { background: #2d1e00; color: #d29922; border: 2px solid #9e6a03; }
     .confidence-badge.low  { background: #2d1315; color: #f85149; border: 2px solid #da3633; }
+    .confidence-badge[title]:hover::after {
+      content: attr(title);
+      position: absolute;
+      top: -32px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1c2028;
+      color: #e1e4e8;
+      font-size: 11px;
+      font-weight: 400;
+      padding: 4px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      border: 1px solid #30363d;
+      z-index: 10;
+    }
 
-    .signal-body { min-width: 0; }
-    .signal-meta {
+    .signal-header {
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-bottom: 4px;
       flex-wrap: wrap;
+      margin-bottom: 4px;
     }
     .market-tag {
       font-size: 11px;
@@ -139,8 +214,14 @@
       padding: 2px 7px;
       border-radius: 4px;
     }
-    .selection { font-weight: 600; font-size: 15px; }
-    .odds { color: #8b949e; font-size: 13px; }
+    .match-id {
+      font-size: 12px;
+      color: #484f58;
+    }
+    .selection {
+      font-weight: 600;
+      font-size: 15px;
+    }
     .direction {
       font-size: 11px;
       font-weight: 600;
@@ -151,13 +232,42 @@
     }
     .direction.shortening { background: #0d2818; color: #3fb950; }
     .direction.drifting   { background: #2d1315; color: #f85149; }
-    .reason {
-      font-size: 13px;
+
+    .signal-details {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+    .signal-detail-item {
+      font-size: 12px;
       color: #8b949e;
-      line-height: 1.5;
-      margin-top: 4px;
+    }
+    .signal-detail-item .label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: #484f58;
+      margin-right: 4px;
     }
 
+    .reason {
+      font-size: 13px;
+      color: #c9d1d9;
+      line-height: 1.5;
+      margin-top: 6px;
+      padding: 8px 12px;
+      background: #0d1117;
+      border-radius: 6px;
+      border: 1px solid #21262d;
+    }
+    .reason strong { color: #f0f6fc; }
+
+    .status-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
     .status-badge {
       font-size: 11px;
       font-weight: 600;
@@ -168,9 +278,14 @@
       white-space: nowrap;
       flex-shrink: 0;
     }
-    .status-badge.pending   { background: #1c2028; color: #8b949e; }
-    .status-badge.correct   { background: #0d2818; color: #3fb950; }
-    .status-badge.incorrect { background: #2d1315; color: #f85149; }
+    .status-badge.pending   { background: #1c2028; color: #8b949e; border: 1px solid #30363d; }
+    .status-badge.correct   { background: #0d2818; color: #3fb950; border: 1px solid #238636; }
+    .status-badge.incorrect { background: #2d1315; color: #f85149; border: 1px solid #da3633; }
+
+    .status-hint {
+      font-size: 11px;
+      color: #484f58;
+    }
 
     .empty-state {
       text-align: center;
@@ -180,7 +295,37 @@
     }
     .empty-state .icon { font-size: 32px; margin-bottom: 12px; display: block; }
 
-    /* ---- Footer ---- */
+    .glossary-toggle {
+      font-size: 12px;
+      color: #58a6ff;
+      cursor: pointer;
+      margin-bottom: 16px;
+      display: inline-block;
+      user-select: none;
+    }
+    .glossary-toggle:hover { text-decoration: underline; }
+    .glossary {
+      display: none;
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .glossary.open { display: block; }
+    .glossary dt {
+      color: #f0f6fc;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+    .glossary dt:first-child { margin-top: 0; }
+    .glossary dd {
+      color: #8b949e;
+      margin-left: 0;
+    }
+
     footer {
       margin-top: 40px;
       padding-top: 16px;
@@ -197,37 +342,85 @@
   <div class="container">
     <header>
       <h1>Sharp Signal</h1>
-      <span class="tag">Live</span>
+      <span class="live-dot"></span>
+      <span class="header-sub" id="last-updated"></span>
     </header>
 
-    <div class="hero">
-      <div class="hero-left">
-        <div class="label">Overall Accuracy</div>
-        <div class="value na" id="accuracy-value">—</div>
-      </div>
-      <div class="hero-right">
-        <div>Signals analysed: <span id="total-resolved">0</span></div>
-        <div>Correct: <span id="correct-count">0</span></div>
-        <div>Incorrect: <span id="incorrect-count">0</span></div>
+    <div class="explainer-card">
+      <strong>👋 What is this?</strong> Sharp Signal monitors World Cup betting odds in real time.
+      When odds move in a <strong>statistically unusual</strong> way (e.g. a team's odds suddenly shorten by 10%),
+      it creates a <strong>signal</strong> — an alert that something noteworthy happened.
+      These may indicate smart money, insider knowledge, or changing conditions.
+      <div class="row">
+        <div class="term">
+          <div class="term-label">Shortening <span class="highlight-green">🟢</span></div>
+          <div class="term-value">Odds getting <strong>smaller</strong> → that outcome is now <strong>more likely</strong></div>
+        </div>
+        <div class="term">
+          <div class="term-label">Drifting <span class="highlight-red">🔴</span></div>
+          <div class="term-value">Odds getting <strong>bigger</strong> → that outcome is now <strong>less likely</strong></div>
+        </div>
+        <div class="term">
+          <div class="term-label">Confidence</div>
+          <div class="term-value">How unusual the move was (0–100). Higher = more significant.</div>
+        </div>
       </div>
     </div>
 
-    <div class="section-title">Recent Signals</div>
+    <div class="hero">
+      <div class="hero-left">
+        <div class="label">Prediction Accuracy</div>
+        <div class="value na" id="accuracy-value">—</div>
+      </div>
+      <div class="hero-right">
+        <div>Signals tracked: <span id="total-resolved">0</span></div>
+        <div>✅ Correct: <span id="correct-count">0</span></div>
+        <div>❌ Incorrect: <span id="incorrect-count">0</span></div>
+      </div>
+    </div>
+
+    <div class="section-title">
+      Live Signals
+      <span class="count" id="signal-count"></span>
+    </div>
+
+    <span class="glossary-toggle" id="glossary-toggle">📖 Show glossary</span>
+    <dl class="glossary" id="glossary">
+      <dt>Signal</dt>
+      <dd>An alert triggered when odds move in a statistically unusual way. Each signal tracks one market (e.g. "over 2.5 goals") for one match.</dd>
+      <dt>Shortening 🟢</dt>
+      <dd>Odds are getting shorter (smaller number) — the market thinks this outcome is becoming more likely.</dd>
+      <dt>Drifting 🔴</dt>
+      <dd>Odds are getting longer (bigger number) — the market thinks this outcome is becoming less likely.</dd>
+      <dt>Confidence</dt>
+      <dd>A score from 0–100 indicating how statistically unusual the odds movement was. Higher confidence = more likely to be a real signal (not random noise).</dd>
+      <dt>Z-score</dt>
+      <dd>A statistical measure of how many standard deviations the latest odds are from the recent average. Higher = more unusual.</dd>
+      <dt>Accuracy</dt>
+      <dd>After matches finish, signals are compared against the actual result. Accuracy = percentage of correct predictions.</dd>
+    </dl>
+
     <div class="signals-list" id="signals-list">
       <div class="empty-state">
         <span class="icon">📡</span>
-        Waiting for first signal…
+        Waiting for signals…
       </div>
     </div>
 
     <footer>
       <span>Sharp Signal v0.1</span>
-      <span id="last-updated"></span>
+      <span>Data refreshes every 10 seconds</span>
     </footer>
   </div>
 
   <script>
     const $ = (id) => document.getElementById(id);
+
+    document.getElementById('glossary-toggle').addEventListener('click', function() {
+      const g = document.getElementById('glossary');
+      g.classList.toggle('open');
+      this.textContent = g.classList.contains('open') ? '📖 Hide glossary' : '📖 Show glossary';
+    });
 
     function accuracyClass(pct) {
       if (pct === null || pct === undefined) return 'na';
@@ -242,10 +435,34 @@
       return 'low';
     }
 
+    function confHint(c) {
+      if (c >= 75) return 'Very unusual move — high confidence';
+      if (c >= 55) return 'Moderate move — medium confidence';
+      return 'Minor move — low confidence';
+    }
+
     function statusLabel(s) {
-      if (s === 'pending') return 'Pending';
-      if (s === 'correct') return 'Correct';
-      return 'Incorrect';
+      if (s === 'pending') return '⏳ Awaiting result';
+      if (s === 'correct') return '✅ Correct prediction';
+      return '❌ Wrong prediction';
+    }
+
+    function statusHint(s) {
+      if (s === 'pending') return 'Match hasn\'t finished yet — signal not yet resolved';
+      if (s === 'correct') return 'The odds movement accurately predicted the result';
+      return 'The result went the other way';
+    }
+
+    function marketLabel(m) {
+      return m.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    function selectionLabel(s) {
+      if (s === 'over') return 'Over';
+      if (s === 'under') return 'Under';
+      if (s === 'part1') return 'Home';
+      if (s === 'part2') return 'Away';
+      return s;
     }
 
     function timeAgo(iso) {
@@ -256,39 +473,82 @@
       return `${Math.floor(diff / 3600)}h ago`;
     }
 
+    function parseReason(reason, direction) {
+      const pctMatch = reason.match(/([\d.]+)%/);
+      const zMatch = reason.match(/([\d.]+) standard/);
+      const minMatch = reason.match(/in (\d+) (minute|second)/);
+      const pct = pctMatch ? pctMatch[1] : '?';
+      const z = zMatch ? parseFloat(zMatch[1]) : null;
+      const mins = minMatch ? minMatch[1] : '?';
+      const dirLabel = direction === 'shortening' ? 'more likely 🔥' : 'less likely ❄️';
+      return { pct, z, mins, dirLabel };
+    }
+
     function renderSignals(signals) {
       const el = $('signals-list');
+      const count = $('signal-count');
+
       if (!signals.length) {
         el.innerHTML = `
           <div class="empty-state">
             <span class="icon">📡</span>
-            Waiting for first signal…
+            Waiting for signals…<br>
+            <span style="font-size:13px;color:#484f58;margin-top:6px;display:block">
+              Signals appear when statistically unusual odds movements are detected.
+            </span>
           </div>`;
+        count.textContent = '';
         return;
       }
-      el.innerHTML = signals.map(s => `
+      count.textContent = `(${signals.length} active)`;
+
+      el.innerHTML = signals.map(s => {
+        const p = parseReason(s.reason, s.direction);
+        const zDisplay = p.z !== null ? `z-score ${p.z.toFixed(1)}` : '';
+        return `
         <div class="signal-card">
-          <div class="confidence-badge ${confClass(s.confidence)}">
-            ${Math.round(s.confidence)}
-          </div>
-          <div class="signal-body">
-            <div class="signal-meta">
-              <span class="market-tag">${s.market}</span>
-              <span class="selection">${s.selection}</span>
-              <span class="odds">@ ${s.odds_value.toFixed(2)}</span>
-              <span class="direction ${s.direction}">${s.direction}</span>
+          <div class="signal-top">
+            <div class="confidence-badge ${confClass(s.confidence)}" title="${confHint(s.confidence)}">
+              ${Math.round(s.confidence)}
             </div>
-            <div class="reason">${s.reason}</div>
+            <div>
+              <div class="signal-header">
+                <span class="market-tag">${marketLabel(s.market)}</span>
+                <span class="match-id">Match #${s.match_id}</span>
+              </div>
+              <div>
+                <span class="selection">${selectionLabel(s.selection)}</span>
+                <span class="direction ${s.direction}">${s.direction}</span>
+                <span style="font-size:13px;color:#8b949e;margin-left:6px">odds @ ${s.odds_value.toFixed(2)}</span>
+              </div>
+              <div class="signal-details">
+                <span class="signal-detail-item"><span class="label">Move:</span> ${p.pct}%</span>
+                <span class="signal-detail-item"><span class="label">Over:</span> ${p.mins} min</span>
+                ${zDisplay ? `<span class="signal-detail-item"><span class="label">${zDisplay}</span></span>` : ''}
+                <span class="signal-detail-item"><span class="label">Outlook:</span> ${p.dirLabel}</span>
+              </div>
+            </div>
+            <div class="status-badge-row">
+              <span class="status-badge ${s.status}" title="${statusHint(s.status)}">${statusLabel(s.status)}</span>
+            </div>
           </div>
-          <span class="status-badge ${s.status}">${statusLabel(s.status)}</span>
-        </div>
-      `).join('');
+          <div class="reason">
+            <strong>📊 What happened:</strong> The odds for <strong>${selectionLabel(s.selection)}</strong> moved
+            <strong>${p.pct}%</strong> in ${p.mins} minutes${p.z !== null ? ` — that's ${p.z.toFixed(1)} standard deviations from the recent average` : ''}.
+            This is ${s.confidence >= 75 ? 'a highly unusual' : s.confidence >= 55 ? 'a moderately unusual' : 'a minor'} movement.
+          </div>
+        </div>`;
+      }).join('');
     }
 
     function renderAccuracy(data) {
       const pct = data.overall_accuracy_pct;
       const el = $('accuracy-value');
-      el.textContent = pct > 0 ? `${pct.toFixed(1)}%` : '—';
+      if (data.total_resolved > 0) {
+        el.textContent = `${pct.toFixed(1)}%`;
+      } else {
+        el.textContent = '—';
+      }
       el.className = `value ${accuracyClass(pct)}`;
       $('total-resolved').textContent = data.total_resolved;
       $('correct-count').textContent = data.correct;
@@ -298,14 +558,14 @@
     async function refresh() {
       try {
         const [sigRes, accRes] = await Promise.all([
-          fetch('/signals?limit=20'),
+          fetch('/signals?limit=50'),
           fetch('/accuracy'),
         ]);
         const sigData = await sigRes.json();
         const accData = await accRes.json();
         renderSignals(sigData.signals || []);
         renderAccuracy(accData);
-        $('last-updated').textContent = `Updated ${new Date().toLocaleTimeString()}`;
+        $('last-updated').innerHTML = `🔄 ${new Date().toLocaleTimeString()}`;
       } catch (e) {
         console.error('Refresh failed:', e);
       }
