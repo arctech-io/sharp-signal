@@ -130,20 +130,20 @@ class TestComputeConfidence:
 
 class TestBuildReason:
     def test_shortening(self):
-        r = build_reason(18.0, 2.4, SignalDirection.SHORTENING, 180.0)
+        r = build_reason(18.0, 2.4, SignalDirection.SHORTENING, 12)
         assert "18.0%" in r
         assert "2.4 standard deviations" in r
         assert "shortening" in r
-        assert "3 minutes" in r
+        assert "12 observations" in r
 
     def test_drifting(self):
-        r = build_reason(12.0, 3.0, SignalDirection.DRIFTING, 60.0)
+        r = build_reason(12.0, 3.0, SignalDirection.DRIFTING, 8)
         assert "drifting" in r
-        assert "1 minutes" in r
+        assert "8 observations" in r
 
     def test_seconds(self):
-        r = build_reason(10.0, 2.1, SignalDirection.SHORTENING, 30.0)
-        assert "30 seconds" in r
+        r = build_reason(10.0, 2.1, SignalDirection.SHORTENING, 3)
+        assert "3 observations" in r
 
 
 # ---------------------------------------------------------------------------

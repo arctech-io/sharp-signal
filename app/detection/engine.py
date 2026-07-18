@@ -64,10 +64,18 @@ def rolling_std(values: list[float]) -> float:
 def z_score(value: float, mean: float, std: float) -> float:
     """Z-score of *value* given *mean* and *std*.
 
-    Returns 0.0 when std is zero (flat window → no spread).
+    When the window is perfectly flat (std == 0) a deviation from the mean
+    is, by definition, an extreme outlier. Rather than returning 0.0 — which
+    would wrongly suppress detection — we report a large finite z-score
+    proportional to the relative deviation, so a jump off a stable baseline
+    is flagged as highly unusual.
     """
     if std == 0.0:
-        return 0.0
+        if value == mean:
+            return 0.0
+        # Flat baseline + any deviation → extreme outlier.
+        denom = abs(mean) if mean != 0.0 else 1.0
+        return abs((value - mean) / denom) * 10.0
     return (value - mean) / std
 
 
@@ -91,8 +99,8 @@ def compute_confidence(
     """
     pct_excess = max(0.0, pct - pct_threshold) / pct_threshold if pct_threshold else 0.0
     z_excess = max(0.0, z - z_threshold) / z_threshold if z_threshold else 0.0
-    raw = max(pct_excess, z_excess)
-    # Map: 0 excess → 50, 1× excess → 75, 2× excess → 100, capped at 100
+    raw = min(2.0, max(pct_excess, z_excess))
+    # Map: 0× excess → 50, 1× excess → 75, 2× excess → 100 (capped).
     score = 50.0 + raw * 25.0
     return min(100.0, max(0.0, score))
 
@@ -101,7 +109,7 @@ def build_reason(
     pct: float,
     z: float,
     direction: SignalDirection,
-    window_seconds: float,
+    window_points: int,
 ) -> str:
     """Build a one-sentence human-readable explanation of the signal.
 
@@ -109,16 +117,11 @@ def build_reason(
         pct: Absolute percentage change.
         z: Z-score vs the rolling window.
         direction: Whether odds shortened or drifted.
-        window_seconds: Time span of the rolling window in seconds.
+        window_points: Number of recent odds observations in the window.
     """
     direction_word = "shortening" if direction == SignalDirection.SHORTENING else "drifting"
-    minutes = window_seconds / 60.0
-    if minutes >= 1.0:
-        time_phrase = f"in {minutes:.0f} minutes"
-    else:
-        time_phrase = f"in {window_seconds:.0f} seconds"
     return (
-        f"Odds moved {pct:.1f}% {time_phrase}, "
+        f"Odds moved {pct:.1f}% over {window_points} observations, "
         f"{z:.1f} standard deviations from the recent average — "
         f"sharp {direction_word}."
     )
@@ -214,18 +217,7 @@ def check_for_signal(
     direction = determine_direction(prev, new_odds)
     confidence = compute_confidence(pct, z, config.pct_change_threshold, config.z_score_threshold)
 
-    # Compute window time span for the reason string
-    ts = window.timestamps
-    if len(ts) >= 2:
-        span = (ts[-1] - ts[0]).total_seconds()
-    else:
-        span = 0.0
-    # Include the gap from last entry to new timestamp
-    if ts:
-        span += (new_timestamp - ts[-1]).total_seconds()
-    span = max(span, 0.0)
-
-    reason = build_reason(pct, z, direction, span)
+    reason = build_reason(pct, z, direction, n)
 
     return Signal(
         id=str(uuid.uuid4()),
