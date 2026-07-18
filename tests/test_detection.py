@@ -485,3 +485,49 @@ class TestDetectionEngine:
             odds_value=100.0, timestamp=_ts(0),
         ))
         assert signal is None
+
+    def test_signal_cooldown_suppresses_duplicates(self):
+        """Repeated same-direction moves within the cooldown window emit once."""
+        engine = DetectionEngine(DetectionConfig(
+            pct_change_threshold=5.0, z_score_threshold=2.0, min_window_size=3,
+            signal_cooldown_seconds=600,
+        ))
+        for i in range(5):
+            engine.process(OddsUpdate(
+                match_id="M1", market="1X2", selection="Home",
+                odds_value=2.00, timestamp=_ts(i),
+            ))
+        first = engine.process(OddsUpdate(
+            match_id="M1", market="1X2", selection="Home",
+            odds_value=2.50, timestamp=_ts(5),
+        ))
+        assert first is not None
+        # Same direction (still rising against baseline) shortly after → suppressed
+        second = engine.process(OddsUpdate(
+            match_id="M1", market="1X2", selection="Home",
+            odds_value=2.60, timestamp=_ts(6),
+        ))
+        assert second is None
+
+    def test_signal_cooldown_allows_opposite_direction(self):
+        """A direction flip is a new signal even within the cooldown."""
+        engine = DetectionEngine(DetectionConfig(
+            pct_change_threshold=5.0, z_score_threshold=2.0, min_window_size=3,
+            signal_cooldown_seconds=600,
+        ))
+        for i in range(5):
+            engine.process(OddsUpdate(
+                match_id="M1", market="1X2", selection="Home",
+                odds_value=2.00, timestamp=_ts(i),
+            ))
+        drift = engine.process(OddsUpdate(
+            match_id="M1", market="1X2", selection="Home",
+            odds_value=2.50, timestamp=_ts(5),
+        ))
+        assert drift is not None and drift.direction == SignalDirection.DRIFTING
+        # Price falls back → shortening is a new direction → should fire
+        shorten = engine.process(OddsUpdate(
+            match_id="M1", market="1X2", selection="Home",
+            odds_value=1.95, timestamp=_ts(6),
+        ))
+        assert shorten is not None and shorten.direction == SignalDirection.SHORTENING

@@ -27,6 +27,7 @@ class DetectionConfig:
     pct_change_threshold: float = 5.0
     rolling_window_size: int = 20
     min_window_size: int = 5
+    signal_cooldown_seconds: int = 600
 
 
 # ---------------------------------------------------------------------------
@@ -251,6 +252,8 @@ class DetectionEngine:
     def __init__(self, config: DetectionConfig | None = None) -> None:
         self.config = config or DetectionConfig()
         self._windows: dict[tuple[str, str, str], RollingWindow] = {}
+        # (match, market, selection) -> (direction, last_signal_timestamp)
+        self._last_signal: dict[tuple[str, str, str], tuple[str, datetime]] = {}
 
     def _key(self, match_id: str, market: str, selection: str) -> tuple[str, str, str]:
         return (match_id, market, selection)
@@ -264,7 +267,9 @@ class DetectionEngine:
         """Process one OddsUpdate and return a Signal if a sharp move is detected.
 
         The window is mutated (the new entry is pushed) regardless of whether
-        a signal fires.
+        a signal fires. To avoid flooding the dashboard, a repeated signal for
+        the same (match, market, selection, direction) is suppressed until
+        ``signal_cooldown_seconds`` has elapsed since the last one.
         """
         key = self._key(update.match_id, update.market, update.selection)
         window = self._get_window(key)
@@ -282,4 +287,16 @@ class DetectionEngine:
         # Always push the new value into the window
         window.push(WindowEntry(odds_value=update.odds_value, timestamp=update.timestamp))
 
+        if signal is None:
+            return None
+
+        # Cooldown: skip duplicate-direction signals for the same key.
+        prev = self._last_signal.get(key)
+        if prev is not None:
+            prev_dir, prev_ts = prev
+            elapsed = (signal.created_at - prev_ts).total_seconds()
+            if prev_dir == signal.direction.value and elapsed < self.config.signal_cooldown_seconds:
+                return None
+
+        self._last_signal[key] = (signal.direction.value, signal.created_at)
         return signal

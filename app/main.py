@@ -193,6 +193,7 @@ async def _background_loop(shutdown_event: asyncio.Event) -> None:
             pct_change_threshold=settings.pct_change_threshold,
             rolling_window_size=settings.rolling_window_size,
             min_window_size=settings.min_window_size,
+            signal_cooldown_seconds=settings.signal_cooldown_seconds,
         )
     )
     while not shutdown_event.is_set():

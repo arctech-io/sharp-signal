@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     pct_change_threshold: float = 5.0
     rolling_window_size: int = 20
     min_window_size: int = 5
+    signal_cooldown_seconds: int = 600
 
 
 settings = Settings()

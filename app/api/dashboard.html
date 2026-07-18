@@ -340,11 +340,11 @@
     function parseReason(reason, direction) {
       const pct = reason.match(/([\d.]+)%/);
       const z = reason.match(/([\d.]+) standard/);
-      const mins = reason.match(/in (\d+) (minute|second)/);
+      const obs = reason.match(/over (\d+) observations/);
       return {
         pct: pct ? pct[1] : '?',
         z: z ? parseFloat(z[1]) : null,
-        mins: mins ? mins[1] : '?',
+        obs: obs ? obs[1] : '?',
         dirLabel: direction === 'shortening' ? 'more likely' : 'less likely',
       };
     }
@@ -387,13 +387,13 @@
               </div>
               <div class="signal-meta">
                 <span class="item"><span class="k">Move</span>${p.pct}%</span>
-                <span class="item"><span class="k">Window</span>${p.mins} min</span>
+                <span class="item"><span class="k">Window</span>${p.obs} obs</span>
                 ${z ? `<span class="item"><span class="k">Z-score</span>${z}</span>` : ''}
                 <span class="item"><span class="k">Outlook</span>${p.dirLabel}</span>
               </div>
               <div class="explain">
                 Odds for <strong>${selectionLabel(s.selection)}</strong> moved <strong>${p.pct}%</strong>
-                in ${p.mins} minutes${p.z !== null ? ` — ${p.z.toFixed(1)} standard deviations from its recent average` : ''}.
+                over ${p.obs} observations${p.z !== null ? ` — ${p.z.toFixed(1)} standard deviations from its recent average` : ''}.
                 This is a ${s.confidence >= 75 ? 'highly unusual' : s.confidence >= 55 ? 'moderately unusual' : 'minor'} movement.
               </div>
             </div>
