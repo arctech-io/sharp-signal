@@ -25,14 +25,26 @@ router = APIRouter()
 
 @router.get("/health")
 async def health_check():
-    """Return uptime and last successful poll time."""
-    from app.main import _get_last_poll, _startup_ts
+    """Return uptime, last successful poll, and the latest poll status.
+
+    ``poll_status`` is one of: starting, ok, auth_error, not_configured,
+    error, no_data. It lets the dashboard surface connectivity/auth problems
+    (e.g. an expired TxLINE token) instead of silently showing an empty board.
+    """
+    from app.main import (
+        _get_last_poll,
+        _poll_detail,
+        _poll_status,
+        _startup_ts,
+    )
 
     last_poll = _get_last_poll()
     return {
         "status": "ok",
         "uptime_seconds": round(time.time() - _startup_ts, 1),
         "last_successful_poll": last_poll.isoformat() if last_poll else None,
+        "poll_status": _poll_status,
+        "poll_detail": _poll_detail,
     }
 
 

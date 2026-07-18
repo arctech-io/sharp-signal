@@ -20,6 +20,14 @@ RATE_LIMIT_DELAY = 0.5  # seconds between fixture odds requests
 class TxLineError(Exception):
     """Raised when the TxLINE API returns a non-retryable error."""
 
+    def __init__(self, message: str, status_code: int | None = None) -> None:
+        super().__init__(message)
+        self.message = message
+        self.status_code = status_code
+
+    def __str__(self) -> str:  # pragma: no cover - formatting only
+        return self.message
+
 
 class TxLineClient:
     """Async client for the TxLINE sports data API.
@@ -92,7 +100,8 @@ class TxLineClient:
                         body,
                     )
                     last_exc = TxLineError(
-                        f"Server error {resp.status_code} on {path}"
+                        f"Server error {resp.status_code} on {path}",
+                        status_code=resp.status_code,
                     )
                 else:
                     resp.raise_for_status()
@@ -122,7 +131,8 @@ class TxLineClient:
                 else:
                     raise TxLineError(
                         f"Client error {exc.response.status_code} on {path}: "
-                        f"{exc.response.text[:200]}"
+                        f"{exc.response.text[:200]}",
+                        status_code=exc.response.status_code,
                     ) from exc
             except httpx.RequestError as exc:
                 logger.warning(

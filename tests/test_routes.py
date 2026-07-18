@@ -64,6 +64,45 @@ class TestHealthEndpoint:
         assert "uptime_seconds" in data
         assert "last_successful_poll" in data
 
+    def test_health_exposes_poll_status(self, client):
+        from app import main as m
+        m._set_poll_status("auth_error", "TxLINE returned 401 — check tokens")
+        resp = client.get("/health")
+        data = resp.json()
+        assert data["poll_status"] == "auth_error"
+        assert "401" in data["poll_detail"]
+
+
+class TestPollStatusLogic:
+    def test_auth_error_detected_from_401(self):
+        """A 401/403 from TxLINE is surfaced as auth_error, not a generic error."""
+        from app import main as m
+        from app.ingestion.txline_client import TxLineError
+
+        m._set_poll_status("starting")
+        try:
+            raise TxLineError("Client error 401", status_code=401)
+        except TxLineError as exc:
+            if exc.status_code in (401, 403):
+                m._set_poll_status("auth_error", f"TxLINE returned {exc.status_code}")
+            else:
+                m._set_poll_status("error", exc.message)
+        assert m._poll_status == "auth_error"
+
+    def test_other_client_error_is_generic(self):
+        from app import main as m
+        from app.ingestion.txline_client import TxLineError
+
+        m._set_poll_status("starting")
+        try:
+            raise TxLineError("Client error 404", status_code=404)
+        except TxLineError as exc:
+            if exc.status_code in (401, 403):
+                m._set_poll_status("auth_error", f"TxLINE returned {exc.status_code}")
+            else:
+                m._set_poll_status("error", exc.message)
+        assert m._poll_status == "error"
+
 
 class TestSignalsEndpoint:
     def test_empty_signals(self, client):

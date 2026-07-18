@@ -37,9 +37,21 @@ logger = logging.getLogger("sharp_signal")
 _startup_ts: float = time.time()
 _last_successful_poll: datetime | None = None
 
+# Most-recent poll outcome, surfaced to the dashboard so auth/connectivity
+# problems (e.g. an expired TxLINE token) are obvious instead of silently
+# showing an empty board.
+_poll_status: str = "starting"  # starting | ok | auth_error | not_configured | error | no_data
+_poll_detail: str = ""
+
 
 def _get_last_poll() -> datetime | None:
     return _last_successful_poll
+
+
+def _set_poll_status(status: str, detail: str = "") -> None:
+    global _poll_status, _poll_detail
+    _poll_status = status
+    _poll_detail = detail
 
 
 # ---------------------------------------------------------------------------
@@ -87,6 +99,7 @@ async def _poll_cycle(engine: DetectionEngine) -> None:
 
     if not settings.txline_base_url:
         logger.debug("TXLINE_BASE_URL not configured — skipping poll cycle")
+        _set_poll_status("not_configured", "TXLINE_BASE_URL is not set")
         return
 
     async with TxLineClient(
@@ -97,11 +110,17 @@ async def _poll_cycle(engine: DetectionEngine) -> None:
             fixtures = await client.get_fixtures(
                 competition_filter=settings.txline_competition_filter or None
             )
-        except TxLineError:
-            logger.exception("Failed to fetch fixtures from TxLINE — will retry next cycle")
+        except TxLineError as exc:
+            if exc.status_code in (401, 403):
+                logger.error("TxLINE auth failed (%s) — token may be invalid or expired", exc.status_code)
+                _set_poll_status("auth_error", f"TxLINE returned {exc.status_code} — check TXLINE_API_KEY / TXLINE_API_TOKEN")
+            else:
+                logger.warning("Failed to fetch fixtures from TxLINE (%s)", exc.status_code)
+                _set_poll_status("error", f"TxLINE error {exc.status_code}: {exc.message}")
             return
         except Exception:
             logger.exception("Unexpected error fetching fixtures — will retry next cycle")
+            _set_poll_status("error", "Unexpected error fetching fixtures")
             return
 
         # Cache fixture metadata so the dashboard can show team names
@@ -111,15 +130,22 @@ async def _poll_cycle(engine: DetectionEngine) -> None:
             odds_updates = await client.fetch_all_odds(
                 competition_filter=settings.txline_competition_filter or None
             )
-        except TxLineError:
-            logger.exception("Failed to fetch odds from TxLINE — will retry next cycle")
+        except TxLineError as exc:
+            if exc.status_code in (401, 403):
+                logger.error("TxLINE auth failed (%s) — token may be invalid or expired", exc.status_code)
+                _set_poll_status("auth_error", f"TxLINE returned {exc.status_code} — check TXLINE_API_KEY / TXLINE_API_TOKEN")
+            else:
+                logger.warning("Failed to fetch odds from TxLINE (%s)", exc.status_code)
+                _set_poll_status("error", f"TxLINE error {exc.status_code}: {exc.message}")
             return
         except Exception:
             logger.exception("Unexpected error fetching odds — will retry next cycle")
+            _set_poll_status("error", "Unexpected error fetching odds")
             return
 
         if not odds_updates:
             logger.info("No odds updates received this cycle")
+            _set_poll_status("no_data", "TxLINE returned no odds this cycle (matches may not be live yet)")
             return
 
         logger.info("Received %d odds updates", len(odds_updates))
@@ -170,6 +196,7 @@ async def _poll_cycle(engine: DetectionEngine) -> None:
             resolve_db.close()
 
     _last_successful_poll = datetime.now(timezone.utc)
+    _set_poll_status("ok")
     logger.info(
         "Poll cycle complete: %d odds processed, %d signals created, %d resolved",
         len(odds_updates),

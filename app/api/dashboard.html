@@ -223,6 +223,26 @@
       font-size: 12px; color: var(--text-faint);
     }
 
+    /* Status banner (auth / connectivity problems) */
+    .status-banner {
+      border-radius: var(--radius); padding: 16px 20px; margin-bottom: 28px;
+      font-size: 13.5px; line-height: 1.6; display: flex; gap: 12px; align-items: flex-start;
+    }
+    .status-banner .ico { font-size: 18px; line-height: 1.3; flex-shrink: 0; }
+    .status-banner .b-title { font-weight: 600; margin-bottom: 2px; }
+    .status-banner .b-body { color: var(--text-dim); }
+    .status-banner.error {
+      background: var(--red-bg); border: 1px solid rgba(244,118,124,0.35); color: var(--red);
+    }
+    .status-banner.error .b-body { color: #f0b4b7; }
+    .status-banner.warn {
+      background: #211c0a; border: 1px solid rgba(227,179,65,0.35); color: var(--amber);
+    }
+    .status-banner.warn .b-body { color: #e7cd87; }
+    .status-banner.info {
+      background: var(--surface); border: 1px solid var(--border); color: var(--text-dim);
+    }
+
     /* ----- Tablet ----- */
     @media (max-width: 900px) {
       .container { padding: 44px 20px 72px; }
@@ -281,8 +301,10 @@
     <header>
       <div class="logo-mark"></div>
       <h1>Sharp Signal</h1>
-      <span class="status-pill"><span class="dot"></span><span id="last-updated">Connecting…</span></span>
+      <span class="status-pill"><span id="last-updated">Connecting…</span></span>
     </header>
+
+    <div id="status-banner" class="status-banner" style="display:none;"></div>
 
     <section class="onboarding">
       <h2>What is this dashboard?</h2>
@@ -474,15 +496,64 @@
       $('incorrect-count').textContent = data.incorrect;
     }
 
+    function renderStatus(health) {
+      const pill = $('last-updated');
+      const banner = $('status-banner');
+      const status = health.poll_status || 'starting';
+      const detail = health.poll_detail || '';
+
+      // Header pill: green when data is flowing, amber/red otherwise.
+      const good = status === 'ok';
+      pill.innerHTML = (good ? '<span class="dot"></span>' : '') +
+        (good ? 'Live' : status === 'starting' ? 'Starting…' : 'Not ingesting');
+
+      // Banner only for problem / informative states.
+      const banners = {
+        auth_error: {
+          cls: 'error', ico: '⚠', title: 'TxLINE authentication failed',
+          body: 'The API token or JWT is invalid or expired (HTTP ' + (detail.match(/\d+/) || ['']) [0] + '). ' +
+                'Update TXLINE_API_KEY and TXLINE_API_TOKEN in your environment, then redeploy.',
+        },
+        not_configured: {
+          cls: 'warn', ico: '⚙', title: 'TxLINE not configured',
+          body: 'TXLINE_BASE_URL is not set. The app is running but has no data source.',
+        },
+        error: {
+          cls: 'error', ico: '⚠', title: 'Cannot reach TxLINE',
+          body: detail || 'An error occurred while contacting the TxLINE API. Retrying next cycle.',
+        },
+        no_data: {
+          cls: 'info', ico: 'ℹ', title: 'No live odds yet',
+          body: 'Connected to TxLINE, but no odds were returned this cycle — World Cup matches may not be live yet.',
+        },
+      };
+
+      if (status === 'ok' || status === 'starting' || !banners[status]) {
+        banner.style.display = 'none';
+        banner.innerHTML = '';
+        return;
+      }
+      const b = banners[status];
+      banner.className = 'status-banner ' + b.cls;
+      banner.style.display = 'flex';
+      banner.innerHTML =
+        `<span class="ico">${b.ico}</span><div>` +
+        `<div class="b-title">${b.title}</div>` +
+        `<div class="b-body">${b.body}</div></div>`;
+    }
+
     async function refresh() {
       try {
-        const [sig, acc, match] = await Promise.all([
+        const [sig, acc, match, health] = await Promise.all([
           fetch('/signals?limit=100'),
           fetch('/accuracy'),
           fetch('/matches'),
+          fetch('/health'),
         ]);
         renderSignals((await sig.json()).signals || [], (await match.json()).matches || []);
         renderAccuracy(await acc.json());
+        const h = await health.json();
+        renderStatus(h);
         $('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
       } catch (e) {
         $('last-updated').textContent = 'Reconnecting…';
