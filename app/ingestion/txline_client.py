@@ -35,7 +35,7 @@ class TxLineClient:
         api_token: str = "",
         timeout: float = 30.0,
     ) -> None:
-        self.base_url = (base_url or settings.txline_base_url).rstrip("/")
+        self.base_url = (base_url or settings.txline_base_url).rstrip("/") + "/"
         self.jwt = jwt
         self.api_token = api_token
         self.timeout = timeout
@@ -152,7 +152,7 @@ class TxLineClient:
         Returns:
             Raw fixture dicts from the API.
         """
-        resp = await self._request("GET", "/api/fixtures/snapshot")
+        resp = await self._request("GET", "fixtures/snapshot")
         return resp.json()
 
     async def get_odds_for_fixture(self, fixture_id: int) -> list[dict]:
@@ -164,7 +164,7 @@ class TxLineClient:
         Returns:
             Raw odds payload dicts from the API.
         """
-        resp = await self._request("GET", f"/api/odds/snapshot/{fixture_id}")
+        resp = await self._request("GET", f"odds/snapshot/{fixture_id}")
         return resp.json()
 
     async def get_live_matches(self) -> list[dict]:
