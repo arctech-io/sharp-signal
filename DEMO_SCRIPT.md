@@ -78,4 +78,4 @@ _Optional: switch to terminal and show `GET /signals` JSON response._
 ## 4:00 – 4:15 — Wrap
 
 - "Sharp Signal: real-time odds monitoring with statistical rigour."
-- "Repo at github.com/Chmgx81/sharp-signal — MIT, open for feedback."
+- "Repo at github.com/arctech-io/sharp-signal — MIT, open for feedback."

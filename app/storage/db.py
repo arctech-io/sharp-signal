@@ -81,7 +81,7 @@ def get_db():
         db.close()
 
 
-def init_db(db_url: str | None = None) -> SessionLocal:
+def init_db(db_url: str | None = None) -> Session:
     """Create all tables. Accepts an optional override URL for testing."""
     if db_url:
         test_engine = create_engine(db_url, echo=False)
@@ -191,6 +191,31 @@ def get_pending_signals(db: Session) -> list[Signal]:
     rows = (
         db.query(SignalRow)
         .filter_by(status="pending")
+        .order_by(SignalRow.created_at.asc())
+        .all()
+    )
+    return [
+        Signal(
+            id=r.id,
+            match_id=r.match_id,
+            market=r.market,
+            selection=r.selection,
+            odds_value=r.odds_value,
+            confidence=r.confidence,
+            direction=SignalDirection(r.direction),
+            reason=r.reason,
+            status=SignalStatus(r.status),
+            created_at=r.created_at,
+        )
+        for r in rows
+    ]
+
+
+def get_pending_signals_for_match(db: Session, match_id: str) -> list[Signal]:
+    """Return pending signals for a specific match."""
+    rows = (
+        db.query(SignalRow)
+        .filter_by(status="pending", match_id=match_id)
         .order_by(SignalRow.created_at.asc())
         .all()
     )

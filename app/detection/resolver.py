@@ -14,7 +14,7 @@ from app.ingestion.txline_client import TxLineClient, TxLineError
 from app.storage.db import (
     get_match_outcome,
     get_pending_match_ids,
-    get_pending_signals,
+    get_pending_signals_for_match,
     mark_signal_resolved,
     save_match_outcome,
 )
@@ -88,7 +88,7 @@ async def resolve_signals_for_match(
 
     Returns the number of signals resolved.
     """
-    pending = [s for s in get_pending_signals(db) if s.match_id == match_id]
+    pending = get_pending_signals_for_match(db, match_id)
     if not pending:
         return 0
 
