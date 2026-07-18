@@ -53,6 +53,28 @@ pytest -v
 | `GET` | `/signals/{id}` | Single signal detail |
 | `GET` | `/accuracy` | Aggregate accuracy stats — total resolved, correct count, incorrect count, accuracy percentage |
 
+## TxLINE API Feedback
+
+_Edit this section with your actual experience of the TxLINE API._
+
+### What worked well
+
+- _[e.g. "Snapshot endpoints were fast and returned consistent data."]_
+- _[e.g. "Auth via Bearer + X-Api-Token was straightforward."]_
+
+### Where I hit friction
+
+- _[e.g. "Odds values are int32 × 1000 — easy enough to normalise but not documented."]_
+- _[e.g. "Scores snapshot returns multiple entries per match; had to infer the finalised one from action=game_finalised."]_
+- _[e.g. "No rate-limit headers returned, so I added a defensive 0.5s delay between fixture calls."]_
+
+### Suggested improvements
+
+- _[e.g. "A single endpoint that returns odds + scores for all fixtures would reduce the N+1 request pattern."]_
+- _[e.g. "Document the StatusId / period / Action fields that signal a finalised score."]_
+
+---
+
 ## Configuration
 
 All settings are loaded from environment variables (or a `.env` file). Copy `.env.example` to `.env` and fill in your values.

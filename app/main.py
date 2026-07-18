@@ -56,7 +56,10 @@ async def _poll_cycle(engine: DetectionEngine) -> None:
         logger.debug("TXLINE_BASE_URL not configured — skipping poll cycle")
         return
 
-    async with TxLineClient() as client:
+    async with TxLineClient(
+        jwt=settings.txline_api_key,
+        api_token=settings.txline_api_token,
+    ) as client:
         try:
             odds_updates = await client.fetch_all_odds()
         except TxLineError:
