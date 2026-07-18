@@ -3,209 +3,292 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sharp Signal — Live Dashboard</title>
+  <title>Sharp Signal</title>
   <style>
+    :root {
+      --bg: #0b0d12;
+      --surface: #12151c;
+      --surface-2: #171b24;
+      --border: #232936;
+      --border-soft: #1b2029;
+      --text: #e6e9ef;
+      --text-dim: #9aa4b2;
+      --text-faint: #5c6473;
+      --green: #4cc38a;
+      --green-bg: #0f2018;
+      --red: #f4767c;
+      --red-bg: #241417;
+      --amber: #e3b341;
+      --blue: #6ea8fe;
+      --purple: #b392f0;
+      --radius: 14px;
+      --radius-sm: 9px;
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
+    html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #0f1117;
-      color: #e1e4e8;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
       min-height: 100vh;
+      letter-spacing: -0.01em;
     }
 
     .container {
-      max-width: 1000px;
+      max-width: 920px;
       margin: 0 auto;
-      padding: 28px 20px 60px;
+      padding: 56px 24px 80px;
     }
 
+    /* Header */
     header {
       display: flex;
       align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 18px;
+      gap: 12px;
+      margin-bottom: 40px;
     }
-    header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
-    .live-dot {
-      width: 9px; height: 9px; border-radius: 50%;
-      background: #3fb950; display: inline-block;
-      animation: pulse 2s infinite;
+    .logo-mark {
+      width: 30px; height: 30px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--green), #2f8f63);
+      position: relative; flex-shrink: 0;
     }
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
-    .header-sub { margin-left: auto; font-size: 12px; color: #8b949e; }
+    .logo-mark::after {
+      content: ""; position: absolute; inset: 9px 13px;
+      border-left: 2px solid #0b0d12; border-bottom: 2px solid #0b0d12;
+      transform: rotate(-45deg);
+    }
+    header h1 { font-size: 19px; font-weight: 600; letter-spacing: -0.02em; }
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 7px;
+      font-size: 12px; color: var(--text-dim); font-weight: 500;
+      padding: 5px 11px; border: 1px solid var(--border); border-radius: 20px;
+      margin-left: auto;
+    }
+    .status-pill .dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--green);
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
 
-    /* Onboarding explainer */
-    .explainer {
-      background: linear-gradient(135deg, #161b22 0%, #1c2330 100%);
-      border: 1px solid #30363d; border-radius: 12px;
-      padding: 18px 22px; margin-bottom: 22px;
-      font-size: 14px; line-height: 1.6; color: #c9d1d9;
+    /* Onboarding */
+    .onboarding {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 26px 28px;
+      margin-bottom: 32px;
     }
-    .explainer strong { color: #f0f6fc; }
-    .explainer .hl-g { color: #3fb950; }
-    .explainer .hl-r { color: #f85149; }
-    .explainer .terms { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
-    .explainer .term {
-      flex: 1; min-width: 150px; background: #0d1117;
-      border: 1px solid #21262d; border-radius: 8px; padding: 10px 14px;
+    .onboarding h2 {
+      font-size: 14px; font-weight: 600; color: var(--text);
+      margin-bottom: 8px; letter-spacing: -0.01em;
     }
-    .explainer .term-label {
-      font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
-      color: #8b949e; margin-bottom: 2px;
+    .onboarding p {
+      font-size: 13.5px; color: var(--text-dim); line-height: 1.65; max-width: 70ch;
     }
+    .onboarding .terms {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+      margin-top: 20px;
+    }
+    .term {
+      background: var(--surface-2); border: 1px solid var(--border-soft);
+      border-radius: var(--radius-sm); padding: 14px 16px;
+    }
+    .term .label {
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-faint); margin-bottom: 6px; font-weight: 600;
+    }
+    .term .val { font-size: 13px; color: var(--text); line-height: 1.5; }
+    .term .val .g { color: var(--green); font-weight: 600; }
+    .term .val .r { color: var(--red); font-weight: 600; }
 
     /* Accuracy hero */
     .hero {
-      background: #161b22; border: 1px solid #21262d; border-radius: 12px;
-      padding: 22px 26px; margin-bottom: 24px;
       display: flex; align-items: center; justify-content: space-between;
-      flex-wrap: wrap; gap: 16px;
+      gap: 24px; padding: 28px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 40px;
+      flex-wrap: wrap;
     }
-    .hero .label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.6px; color: #8b949e; margin-bottom: 4px; }
-    .hero .value { font-size: 40px; font-weight: 800; letter-spacing: -1.5px; line-height: 1; }
-    .hero .value.good { color: #3fb950; }
-    .hero .value.mid  { color: #d29922; }
-    .hero .value.bad  { color: #f85149; }
-    .hero .value.na   { color: #484f58; }
-    .hero-right { text-align: right; font-size: 13px; color: #8b949e; line-height: 1.8; }
-    .hero-right span { color: #e1e4e8; font-weight: 600; }
+    .hero .metric-label {
+      font-size: 12px; color: var(--text-faint); text-transform: uppercase;
+      letter-spacing: 0.06em; font-weight: 600; margin-bottom: 6px;
+    }
+    .hero .metric-value { font-size: 44px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
+    .hero .metric-value.good { color: var(--green); }
+    .hero .metric-value.mid  { color: var(--amber); }
+    .hero .metric-value.bad  { color: var(--red); }
+    .hero .metric-value.na   { color: var(--text-faint); }
+    .hero-stats { display: flex; gap: 36px; }
+    .hero-stats .stat .n { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+    .hero-stats .stat .k { font-size: 11px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+    .hero-stats .stat.correct .n { color: var(--green); }
+    .hero-stats .stat.incorrect .n { color: var(--red); }
 
-    .section-title {
-      font-size: 13px; font-weight: 600; text-transform: uppercase;
-      letter-spacing: 0.6px; color: #8b949e; margin: 28px 0 14px;
-      display: flex; align-items: center; gap: 8px;
+    /* Section title */
+    .section-head {
+      display: flex; align-items: baseline; gap: 10px; margin-bottom: 18px;
     }
-    .section-title .count { font-size: 11px; color: #484f58; text-transform: none; letter-spacing: 0; }
+    .section-head h3 {
+      font-size: 15px; font-weight: 600; letter-spacing: -0.01em;
+    }
+    .section-head .count { font-size: 12.5px; color: var(--text-faint); }
 
     /* Match group */
     .match-group {
-      background: #161b22; border: 1px solid #21262d; border-radius: 12px;
-      margin-bottom: 14px; overflow: hidden;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); margin-bottom: 16px; overflow: hidden;
     }
     .match-head {
-      display: flex; align-items: center; gap: 12px;
-      padding: 12px 18px; background: #0d1117;
-      border-bottom: 1px solid #21262d; flex-wrap: wrap;
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+      padding: 16px 22px; border-bottom: 1px solid var(--border-soft);
+      background: var(--surface-2);
     }
-    .teams { font-size: 15px; font-weight: 600; }
-    .vs { color: #484f58; font-weight: 400; margin: 0 6px; }
-    .competition-tag {
-      font-size: 11px; font-weight: 600; letter-spacing: 0.3px;
-      color: #d2a8ff; background: #211a2e; padding: 2px 8px; border-radius: 20px;
+    .match-teams { font-size: 14.5px; font-weight: 600; letter-spacing: -0.01em; }
+    .match-teams .vs { color: var(--text-faint); font-weight: 400; margin: 0 8px; }
+    .competition-chip {
+      font-size: 11.5px; font-weight: 500; color: var(--purple);
+      background: rgba(179,146,240,0.1); border: 1px solid rgba(179,146,240,0.2);
+      padding: 3px 10px; border-radius: 20px; letter-spacing: 0.01em;
     }
-    .kickoff { margin-left: auto; font-size: 12px; color: #8b949e; }
+    .kickoff { margin-left: auto; font-size: 12.5px; color: var(--text-dim); }
 
-    .signals-list { display: flex; flex-direction: column; }
-    .signal-card {
-      display: flex; align-items: flex-start; gap: 14px;
-      padding: 14px 18px; border-bottom: 1px solid #1c2128;
+    .signal-row {
+      display: flex; align-items: flex-start; gap: 18px;
+      padding: 18px 22px; border-bottom: 1px solid var(--border-soft);
     }
-    .signal-card:last-child { border-bottom: none; }
-    .signal-card:hover { background: #1a1f29; }
+    .signal-row:last-child { border-bottom: none; }
+    .signal-row:hover { background: var(--surface-2); }
 
-    .confidence-badge {
-      width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0;
+    .conf {
+      width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      font-size: 13px; font-weight: 700; position: relative;
+      font-size: 13px; font-weight: 700; position: relative; letter-spacing: -0.02em;
     }
-    .confidence-badge.high { background: #0d2818; color: #3fb950; border: 2px solid #238636; }
-    .confidence-badge.mid  { background: #2d1e00; color: #d29922; border: 2px solid #9e6a03; }
-    .confidence-badge.low  { background: #2d1315; color: #f85149; border: 2px solid #da3633; }
-    .confidence-badge[title]:hover::after {
-      content: attr(title); position: absolute; top: -34px; left: 50%;
-      transform: translateX(-50%); background: #1c2028; color: #e1e4e8;
-      font-size: 11px; font-weight: 400; padding: 4px 8px; border-radius: 4px;
-      white-space: nowrap; border: 1px solid #30363d; z-index: 10;
+    .conf.high { background: var(--green-bg); color: var(--green); border: 1.5px solid rgba(76,195,138,0.35); }
+    .conf.mid  { background: #211c0a; color: var(--amber); border: 1.5px solid rgba(227,179,65,0.3); }
+    .conf.low  { background: var(--red-bg); color: var(--red); border: 1.5px solid rgba(244,118,124,0.3); }
+    .conf[title]:hover::after {
+      content: attr(title); position: absolute; top: -38px; left: 50%;
+      transform: translateX(-50%); background: #000; color: var(--text);
+      font-size: 11px; font-weight: 400; padding: 5px 9px; border-radius: 6px;
+      white-space: nowrap; border: 1px solid var(--border); z-index: 10;
     }
 
-    .signal-body { flex: 1; min-width: 0; }
-    .signal-line1 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .signal-main { flex: 1; min-width: 0; }
+    .signal-tags { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 7px; }
     .market-tag {
-      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;
-      color: #79c0ff; background: #0d2239; padding: 2px 7px; border-radius: 4px;
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+      color: var(--blue); background: rgba(110,168,254,0.1);
+      padding: 3px 8px; border-radius: 6px;
     }
-    .selection { font-weight: 600; font-size: 15px; }
-    .direction {
-      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
-      padding: 2px 8px; border-radius: 4px;
+    .sel { font-weight: 600; font-size: 14.5px; }
+    .dir {
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+      padding: 3px 9px; border-radius: 6px;
     }
-    .direction.shortening { background: #0d2818; color: #3fb950; }
-    .direction.drifting   { background: #2d1315; color: #f85149; }
-    .odds-val { font-size: 13px; color: #8b949e; }
+    .dir.shortening { background: var(--green-bg); color: var(--green); }
+    .dir.drifting   { background: var(--red-bg); color: var(--red); }
+    .odds { font-size: 13px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 
-    .signal-line2 { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 5px; font-size: 12px; color: #8b949e; }
-    .signal-line2 .label { text-transform: uppercase; font-size: 10px; letter-spacing: 0.3px; color: #484f58; margin-right: 3px; }
+    .signal-meta { display: flex; gap: 22px; flex-wrap: wrap; margin-bottom: 9px; }
+    .signal-meta .item { font-size: 12.5px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+    .signal-meta .item .k { color: var(--text-faint); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; margin-right: 5px; }
 
-    .reason {
-      margin-top: 7px; font-size: 13px; color: #c9d1d9; line-height: 1.5;
-      padding: 8px 12px; background: #0d1117; border-radius: 6px; border: 1px solid #21262d;
+    .explain {
+      font-size: 13px; color: var(--text-dim); line-height: 1.6;
+      padding: 11px 14px; background: var(--bg); border: 1px solid var(--border-soft);
+      border-radius: 8px;
     }
-    .reason strong { color: #f0f6fc; }
+    .explain strong { color: var(--text); font-weight: 600; }
 
-    .status-badge {
-      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
-      padding: 4px 10px; border-radius: 6px; white-space: nowrap; flex-shrink: 0;
-      align-self: center;
+    .badge {
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+      padding: 5px 11px; border-radius: 7px; white-space: nowrap; align-self: center; flex-shrink: 0;
     }
-    .status-badge.pending   { background: #1c2028; color: #8b949e; border: 1px solid #30363d; }
-    .status-badge.correct   { background: #0d2818; color: #3fb950; border: 1px solid #238636; }
-    .status-badge.incorrect { background: #2d1315; color: #f85149; border: 1px solid #da3633; }
+    .badge.pending   { background: var(--surface-2); color: var(--text-dim); border: 1px solid var(--border); }
+    .badge.correct   { background: var(--green-bg); color: var(--green); border: 1px solid rgba(76,195,138,0.3); }
+    .badge.incorrect { background: var(--red-bg); color: var(--red); border: 1px solid rgba(244,118,124,0.3); }
 
-    .empty-state { text-align: center; padding: 60px 24px; color: #484f58; font-size: 15px; }
-    .empty-state .icon { font-size: 32px; margin-bottom: 12px; display: block; }
+    .empty {
+      text-align: center; padding: 72px 24px; color: var(--text-faint); font-size: 14px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    }
 
     footer {
-      margin-top: 40px; padding-top: 16px; border-top: 1px solid #21262d;
-      font-size: 12px; color: #484f58; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+      margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--border-soft);
+      display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+      font-size: 12px; color: var(--text-faint);
+    }
+
+    @media (max-width: 640px) {
+      .onboarding .terms { grid-template-columns: 1fr; }
+      .hero-stats { gap: 24px; }
+      .signal-meta { gap: 14px; }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
+      <div class="logo-mark"></div>
       <h1>Sharp Signal</h1>
-      <span class="live-dot"></span>
-      <span class="header-sub" id="last-updated"></span>
+      <span class="status-pill"><span class="dot"></span><span id="last-updated">Connecting…</span></span>
     </header>
 
-    <div class="explainer">
-      <strong>👋 What am I looking at?</strong> This page watches live World Cup betting odds.
-      When a team's odds move in a <strong>statistically unusual</strong> way — say a team's "win" odds suddenly
-      drop by 10% — Sharp Signal raises a <strong>signal</strong>: a flag that something notable just happened
-      (often <span class="hl-g">smart money</span> moving in, or breaking news).
+    <section class="onboarding">
+      <h2>What is this dashboard?</h2>
+      <p>
+        Sharp Signal monitors live World Cup betting odds. When a selection's odds move in a
+        statistically unusual way, it raises a <strong>signal</strong> — a flag that something
+        noteworthy just happened in the market. Signals resolve to correct or incorrect once the
+        match finishes, feeding the accuracy score above.
+      </p>
       <div class="terms">
         <div class="term">
-          <div class="term-label">Shortening 🟢</div>
-          <div>Odds got <strong>smaller</strong> → that outcome is now <strong>more likely</strong></div>
+          <div class="label">Shortening</div>
+          <div class="val"><span class="g">Odds decreased</span> — the outcome is now considered more likely.</div>
         </div>
         <div class="term">
-          <div class="term-label">Drifting 🔴</div>
-          <div>Odds got <strong>bigger</strong> → that outcome is now <strong>less likely</strong></div>
+          <div class="label">Drifting</div>
+          <div class="val"><span class="r">Odds increased</span> — the outcome is now considered less likely.</div>
         </div>
         <div class="term">
-          <div class="term-label">Confidence</div>
-          <div>How unusual the move was (0–100). <strong>Higher = more significant.</strong></div>
+          <div class="label">Confidence</div>
+          <div class="val">How unusual the move was (0–100). Higher means a stronger, more significant signal.</div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="hero">
+    <section class="hero">
       <div>
-        <div class="label">Prediction Accuracy</div>
-        <div class="value na" id="accuracy-value">—</div>
+        <div class="metric-label">Prediction Accuracy</div>
+        <div class="metric-value na" id="accuracy-value">—</div>
       </div>
-      <div class="hero-right">
-        <div>Signals tracked: <span id="total-resolved">0</span></div>
-        <div>✅ Correct: <span id="correct-count">0</span></div>
-        <div>❌ Incorrect: <span id="incorrect-count">0</span></div>
+      <div class="hero-stats">
+        <div class="stat">
+          <div class="n" id="total-resolved">0</div>
+          <div class="k">Signals tracked</div>
+        </div>
+        <div class="stat correct">
+          <div class="n" id="correct-count">0</div>
+          <div class="k">Correct</div>
+        </div>
+        <div class="stat incorrect">
+          <div class="n" id="incorrect-count">0</div>
+          <div class="k">Incorrect</div>
+        </div>
       </div>
-    </div>
+    </section>
 
-    <div class="section-title">Live Signals <span class="count" id="signal-count"></span></div>
+    <div class="section-head">
+      <h3>Live Signals</h3>
+      <span class="count" id="signal-count"></span>
+    </div>
     <div id="signals-root">
-      <div class="empty-state"><span class="icon">📡</span>Waiting for signals…</div>
+      <div class="empty">Waiting for signals…</div>
     </div>
 
     <footer>
@@ -229,16 +312,15 @@
       return 'low';
     }
     function confHint(c) {
-      if (c >= 75) return 'Very unusual move — high confidence';
-      if (c >= 55) return 'Moderate move — medium confidence';
+      if (c >= 75) return 'Highly unusual move — high confidence';
+      if (c >= 55) return 'Moderately unusual move — medium confidence';
       return 'Minor move — low confidence';
     }
     function statusLabel(s) {
-      if (s === 'pending') return '⏳ Pending';
-      if (s === 'correct') return '✅ Correct';
-      return '❌ Wrong';
+      if (s === 'pending') return 'Pending';
+      if (s === 'correct') return 'Correct';
+      return 'Incorrect';
     }
-
     function marketLabel(m) {
       return m.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
     }
@@ -249,28 +331,21 @@
       if (s === 'part2') return 'Away';
       return s;
     }
-    function timeAgo(iso) {
-      if (!iso) return '';
-      const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-      if (diff < 60) return `${Math.floor(diff)}s ago`;
-      if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-      return `${Math.floor(diff / 3600)}h ago`;
-    }
     function kickoffLabel(iso) {
-      if (!iso) return 'Time TBC';
-      const d = new Date(iso);
-      return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      if (!iso) return 'Kickoff TBC';
+      return new Date(iso).toLocaleString(undefined, {
+        weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
     }
-
     function parseReason(reason, direction) {
-      const pctMatch = reason.match(/([\d.]+)%/);
-      const zMatch = reason.match(/([\d.]+) standard/);
-      const minMatch = reason.match(/in (\d+) (minute|second)/);
+      const pct = reason.match(/([\d.]+)%/);
+      const z = reason.match(/([\d.]+) standard/);
+      const mins = reason.match(/in (\d+) (minute|second)/);
       return {
-        pct: pctMatch ? pctMatch[1] : '?',
-        z: zMatch ? parseFloat(zMatch[1]) : null,
-        mins: minMatch ? minMatch[1] : '?',
-        dirLabel: direction === 'shortening' ? 'more likely 🔥' : 'less likely ❄️',
+        pct: pct ? pct[1] : '?',
+        z: z ? parseFloat(z[1]) : null,
+        mins: mins ? mins[1] : '?',
+        dirLabel: direction === 'shortening' ? 'more likely' : 'less likely',
       };
     }
 
@@ -280,62 +355,61 @@
       (matches || []).forEach(m => { matchMap[m.match_id] = m; });
 
       if (!signals.length) {
-        root.innerHTML = `<div class="empty-state"><span class="icon">📡</span>Waiting for signals…<br>
-          <span style="font-size:13px;color:#484f58;margin-top:6px;display:block">
-          Signals appear when statistically unusual odds movements are detected.</span></div>`;
+        root.innerHTML = '<div class="empty">No signals yet. Unusual odds movements will appear here as they are detected.</div>';
         $('signal-count').textContent = '';
         return;
       }
-      $('signal-count').textContent = `(${signals.length} active)`;
+      $('signal-count').textContent = `${signals.length} active`;
 
-      // group by match_id
       const groups = {};
       signals.forEach(s => { (groups[s.match_id] = groups[s.match_id] || []).push(s); });
 
       root.innerHTML = Object.keys(groups).map(matchId => {
         const meta = matchMap[matchId];
         const head = meta
-          ? `<span class="teams">${meta.home_team}<span class="vs">vs</span>${meta.away_team}</span>
-             <span class="competition-tag">${meta.competition}</span>
-             <span class="kickoff">⏰ ${kickoffLabel(meta.start_time)}</span>`
-          : `<span class="teams">Match #${matchId}</span>`;
-        const cards = groups[matchId].map(s => {
+          ? `<span class="match-teams">${meta.home_team}<span class="vs">vs</span>${meta.away_team}</span>
+             <span class="competition-chip">${meta.competition}</span>
+             <span class="kickoff">${kickoffLabel(meta.start_time)}</span>`
+          : `<span class="match-teams">Match ${matchId}</span>`;
+
+        const rows = groups[matchId].map(s => {
           const p = parseReason(s.reason, s.direction);
-          const zDisplay = p.z !== null ? `${p.z.toFixed(1)}σ` : '';
+          const z = p.z !== null ? p.z.toFixed(1) + 'σ' : null;
           return `
-          <div class="signal-card">
-            <div class="confidence-badge ${confClass(s.confidence)}" title="${confHint(s.confidence)}">${Math.round(s.confidence)}</div>
-            <div class="signal-body">
-              <div class="signal-line1">
+          <div class="signal-row">
+            <div class="conf ${confClass(s.confidence)}" title="${confHint(s.confidence)}">${Math.round(s.confidence)}</div>
+            <div class="signal-main">
+              <div class="signal-tags">
                 <span class="market-tag">${marketLabel(s.market)}</span>
-                <span class="selection">${selectionLabel(s.selection)}</span>
-                <span class="direction ${s.direction}">${s.direction}</span>
-                <span class="odds-val">@ ${s.odds_value.toFixed(2)}</span>
+                <span class="sel">${selectionLabel(s.selection)}</span>
+                <span class="dir ${s.direction}">${s.direction}</span>
+                <span class="odds">@ ${s.odds_value.toFixed(2)}</span>
               </div>
-              <div class="signal-line2">
-                <span><span class="label">Move</span>${p.pct}%</span>
-                <span><span class="label">Window</span>${p.mins} min</span>
-                ${zDisplay ? `<span><span class="label">Z</span>${zDisplay}</span>` : ''}
-                <span><span class="label">Outlook</span>${p.dirLabel}</span>
+              <div class="signal-meta">
+                <span class="item"><span class="k">Move</span>${p.pct}%</span>
+                <span class="item"><span class="k">Window</span>${p.mins} min</span>
+                ${z ? `<span class="item"><span class="k">Z-score</span>${z}</span>` : ''}
+                <span class="item"><span class="k">Outlook</span>${p.dirLabel}</span>
               </div>
-              <div class="reason">
-                <strong>📊 What happened:</strong> The odds for <strong>${selectionLabel(s.selection)}</strong>
-                moved <strong>${p.pct}%</strong> in ${p.mins} minutes${p.z !== null ? ` — that's ${p.z.toFixed(1)} standard deviations from its recent average` : ''}.
-                This is ${s.confidence >= 75 ? 'a highly unusual' : s.confidence >= 55 ? 'a moderately unusual' : 'a minor'} movement.
+              <div class="explain">
+                Odds for <strong>${selectionLabel(s.selection)}</strong> moved <strong>${p.pct}%</strong>
+                in ${p.mins} minutes${p.z !== null ? ` — ${p.z.toFixed(1)} standard deviations from its recent average` : ''}.
+                This is a ${s.confidence >= 75 ? 'highly unusual' : s.confidence >= 55 ? 'moderately unusual' : 'minor'} movement.
               </div>
             </div>
-            <span class="status-badge ${s.status}">${statusLabel(s.status)}</span>
+            <span class="badge ${s.status}">${statusLabel(s.status)}</span>
           </div>`;
         }).join('');
-        return `<div class="match-group"><div class="match-head">${head}</div><div class="signals-list">${cards}</div></div>`;
+
+        return `<div class="match-group"><div class="match-head">${head}</div>${rows}</div>`;
       }).join('');
     }
 
     function renderAccuracy(data) {
       const pct = data.overall_accuracy_pct;
       const el = $('accuracy-value');
-      el.textContent = data.total_resolved > 0 ? `${pct.toFixed(1)}%` : '—';
-      el.className = `value ${accuracyClass(pct)}`;
+      el.textContent = data.total_resolved > 0 ? pct.toFixed(1) + '%' : '—';
+      el.className = `metric-value ${accuracyClass(pct)}`;
       $('total-resolved').textContent = data.total_resolved;
       $('correct-count').textContent = data.correct;
       $('incorrect-count').textContent = data.incorrect;
@@ -343,19 +417,16 @@
 
     async function refresh() {
       try {
-        const [sigRes, accRes, matchRes] = await Promise.all([
+        const [sig, acc, match] = await Promise.all([
           fetch('/signals?limit=100'),
           fetch('/accuracy'),
           fetch('/matches'),
         ]);
-        const sigData = await sigRes.json();
-        const accData = await accRes.json();
-        const matchData = await matchRes.json();
-        renderSignals(sigData.signals || [], matchData.matches || []);
-        renderAccuracy(accData);
-        $('last-updated').textContent = `🔄 Updated ${new Date().toLocaleTimeString()}`;
+        renderSignals((await sig.json()).signals || [], (await match.json()).matches || []);
+        renderAccuracy(await acc.json());
+        $('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
       } catch (e) {
-        console.error('Refresh failed:', e);
+        $('last-updated').textContent = 'Reconnecting…';
       }
     }
 
