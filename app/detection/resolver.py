@@ -50,33 +50,50 @@ def _determine_signal_correctness(
 
 
 def _selection_won(selection: str, market: str, outcome: MatchOutcome) -> bool:
-    """Check if a given selection was the actual outcome of the match."""
-    if market in ("1x2",):
+    """Check if a given selection was the actual outcome of the match.
+
+    Markets are matched on normalized tokens rather than exact strings so
+    TxLINE's `SuperOddsType` values (e.g. `1X2_PARTICIPANT_RESULT`,
+    `OVERUNDER_PARTICIPANT_GOALS`) resolve correctly.
+    """
+    m = market.lower()
+
+    if "1x2" in m or "participant_result" in m:
         if selection == "home":
             return outcome.winner == "home"
         elif selection == "away":
             return outcome.winner == "away"
         elif selection == "draw":
             return outcome.winner == "draw"
-    elif market in ("over/under 2.5", "over/under 1.5", "over/under 3.5"):
+    elif "over" in m and "under" in m:
         total_goals = outcome.home_goals + outcome.away_goals
-        try:
-            line = float(market.split()[-1])
-        except (IndexError, ValueError):
-            line = 2.5
+        line = _extract_overunder_line(m)
         if selection == "over":
             return total_goals > line
         elif selection == "under":
             return total_goals <= line
-    elif market in ("both teams to score", "btts"):
+    elif "both teams" in m or "btts" in m:
         both_scored = outcome.home_goals > 0 and outcome.away_goals > 0
         if selection == "yes":
             return both_scored
         elif selection == "no":
             return not both_scored
 
-    # Unknown market — conservatively mark as incorrect
+    # Unknown market — cannot determine correctness.
+    logger.warning(
+        "Unknown market '%s' for selection '%s' — cannot resolve signal correctness",
+        market,
+        selection,
+    )
     return False
+
+
+def _extract_overunder_line(market: str) -> float:
+    """Pull the goal line (e.g. 2.5) out of an over/under market string."""
+    import re
+
+    match = re.search(r"(\d+(?:\.\d+)?)", market)
+    return float(match.group(1)) if match else 2.5
 
 
 async def resolve_signals_for_match(
@@ -98,8 +115,7 @@ async def resolve_signals_for_match(
 
     # Try to get the scores snapshot from TxLINE
     try:
-        scores = await client._request("GET", f"/api/scores/snapshot/{match_id}")
-        scores_data = scores.json()
+        scores_data = await client.get_scores_snapshot(match_id)
     except TxLineError:
         logger.warning(
             "Could not fetch scores for match %s — will retry next cycle",

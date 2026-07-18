@@ -1,10 +1,12 @@
 """Application configuration loaded from environment variables."""
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """Load settings from .env file and environment."""
+
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     txline_api_key: str = ""
     txline_api_token: str = ""
@@ -15,10 +17,6 @@ class Settings(BaseSettings):
     pct_change_threshold: float = 5.0
     rolling_window_size: int = 20
     min_window_size: int = 5
-
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
 
 
 settings = Settings()

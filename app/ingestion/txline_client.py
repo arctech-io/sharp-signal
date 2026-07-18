@@ -175,6 +175,18 @@ class TxLineClient:
         """
         return await self.get_fixtures()
 
+    async def get_scores_snapshot(self, fixture_id: str | int) -> list[dict]:
+        """Fetch the scores snapshot for a specific fixture.
+
+        Args:
+            fixture_id: TxLINE fixture ID.
+
+        Returns:
+            Raw scores payload dicts from the API.
+        """
+        resp = await self._request("GET", f"scores/snapshot/{fixture_id}")
+        return resp.json()
+
     async def fetch_all_odds(self) -> list[OddsUpdate]:
         """Fetch fixtures then odds for each, normalized to OddsUpdate.
 

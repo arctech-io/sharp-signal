@@ -224,13 +224,13 @@ class TestResolveSignalsForMatch:
         client = AsyncMock()
         count = await resolve_signals_for_match(client, db_session, "M1")
         assert count == 0
-        client._request.assert_not_called()
+        client.get_scores_snapshot.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_txline_error_returns_zero(self, db_session):
         save_signal(db_session, _make_pending_signal())
         client = AsyncMock()
-        client._request.side_effect = TxLineError("network down")
+        client.get_scores_snapshot.side_effect = TxLineError("network down")
         count = await resolve_signals_for_match(client, db_session, "M1")
         assert count == 0
 
@@ -238,7 +238,7 @@ class TestResolveSignalsForMatch:
     async def test_empty_scores_returns_zero(self, db_session):
         save_signal(db_session, _make_pending_signal())
         client = AsyncMock()
-        client._request.return_value = _mock_scores_response()
+        client.get_scores_snapshot.return_value = _mock_scores_response().json.return_value
         count = await resolve_signals_for_match(client, db_session, "M1")
         assert count == 0
 
@@ -246,9 +246,9 @@ class TestResolveSignalsForMatch:
     async def test_no_finalised_score_returns_zero(self, db_session):
         save_signal(db_session, _make_pending_signal())
         client = AsyncMock()
-        client._request.return_value = _mock_scores_response(
+        client.get_scores_snapshot.return_value = _mock_scores_response(
             {"Action": "score_update", "Participant1Goals": 1, "Participant2Goals": 0}
-        )
+        ).json.return_value
         count = await resolve_signals_for_match(client, db_session, "M1")
         assert count == 1
 
@@ -257,9 +257,9 @@ class TestResolveSignalsForMatch:
         sig = _make_pending_signal(selection="Home", direction=SignalDirection.SHORTENING)
         save_signal(db_session, sig)
         client = AsyncMock()
-        client._request.return_value = _mock_scores_response(
+        client.get_scores_snapshot.return_value = _mock_scores_response(
             {"Action": "game_finalised", "Participant1Goals": 2, "Participant2Goals": 0}
-        )
+        ).json.return_value
         count = await resolve_signals_for_match(client, db_session, "M1")
         assert count == 1
         pending = get_pending_signals(db_session)
@@ -272,9 +272,9 @@ class TestResolveSignalsForMatch:
         save_signal(db_session, sig1)
         save_signal(db_session, sig2)
         client = AsyncMock()
-        client._request.return_value = _mock_scores_response(
+        client.get_scores_snapshot.return_value = _mock_scores_response(
             {"Action": "game_finalised", "Participant1Goals": 2, "Participant2Goals": 0}
-        )
+        ).json.return_value
         count = await resolve_signals_for_match(client, db_session, "M1")
         assert count >= 1
 
@@ -291,9 +291,9 @@ class TestResolveAllPending:
         save_signal(db_session, _make_pending_signal(match_id="M1"))
         save_signal(db_session, _make_pending_signal(match_id="M2"))
         client = AsyncMock()
-        client._request.return_value = _mock_scores_response(
+        client.get_scores_snapshot.return_value = _mock_scores_response(
             {"Action": "game_finalised", "Participant1Goals": 1, "Participant2Goals": 0}
-        )
+        ).json.return_value
         total = await resolve_all_pending(client, db_session)
         assert total == 2
 
@@ -303,16 +303,16 @@ class TestResolveAllPending:
         save_signal(db_session, _make_pending_signal(match_id="M2"))
         call_count = 0
 
-        async def side_effect(method, path):
+        async def side_effect(fixture_id):
             nonlocal call_count
             call_count += 1
-            if "M1" in path:
+            if "M1" in str(fixture_id):
                 raise TxLineError("fail for M1")
-            return _mock_scores_response(
+            return [
                 {"Action": "game_finalised", "Participant1Goals": 1, "Participant2Goals": 0}
-            )
+            ]
 
         client = AsyncMock()
-        client._request = AsyncMock(side_effect=side_effect)
+        client.get_scores_snapshot = AsyncMock(side_effect=side_effect)
         total = await resolve_all_pending(client, db_session)
         assert total == 1

@@ -119,9 +119,9 @@ class TestFullPipeline:
 
         # Step 3: Mock TxLINE scores — home wins 2-0
         mock_client = AsyncMock()
-        mock_client._request.return_value = _mock_response(200, json_data=[
+        mock_client.get_scores_snapshot.return_value = [
             {"Action": "game_finalised", "Participant1Goals": 2, "Participant2Goals": 0}
-        ])
+        ]
 
         # Step 4: Resolve
         resolved = await resolve_all_pending(mock_client, db_session)
@@ -181,7 +181,7 @@ class TestFullPipeline:
         TxLINE is completely unreachable — pipeline should log and continue.
         """
         mock_client = AsyncMock()
-        mock_client._request.side_effect = TxLineError("Connection refused")
+        mock_client.get_scores_snapshot.side_effect = TxLineError("Connection refused")
 
         # This should not raise
         resolved = await resolve_all_pending(mock_client, db_session)
@@ -263,14 +263,14 @@ class TestFullPipeline:
             "M3": {"Action": "game_finalised", "Participant1Goals": 0, "Participant2Goals": 3},
         }
 
-        async def mock_request(method, path):
+        async def mock_scores_snapshot(fixture_id):
             for mid, score in scores_map.items():
-                if mid in path:
-                    return _mock_response(200, json_data=[score])
-            return _mock_response(200, json_data=[])
+                if mid in str(fixture_id):
+                    return [score]
+            return []
 
         mock_client = AsyncMock()
-        mock_client._request = AsyncMock(side_effect=mock_request)
+        mock_client.get_scores_snapshot = AsyncMock(side_effect=mock_scores_snapshot)
 
         resolved = await resolve_all_pending(mock_client, db_session)
         assert resolved == 3
