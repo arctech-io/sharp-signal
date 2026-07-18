@@ -20,6 +20,7 @@ TxLINE API ──► Ingestion ──► Detection ──► Storage ──► A
 
 - Authenticates with a JWT bearer token + `X-Api-Token` header.
 - `GET /api/fixtures/snapshot` → returns all live/upcoming fixtures.
+- Fixtures are filtered client-side by competition (`TXLINE_COMPETITION_FILTER`, default `World Cup`) so only World Cup matches are ingested — the TxLINE World Cup feed also includes warm-up friendlies.
 - For each fixture, `GET /api/odds/snapshot/{fixtureId}` → returns OddsPayload[].
 - Raw payloads are normalised into flat `OddsUpdate` records (one per market/selection).
 - Retry: up to 3 attempts with exponential backoff (1s → 2s → 4s, capped at 60s). Retries on network errors and 5xx; fails fast on 4xx.

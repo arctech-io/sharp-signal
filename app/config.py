@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     txline_api_key: str = ""
     txline_api_token: str = ""
     txline_base_url: str = ""
+    txline_competition_filter: str = "World Cup"
     poll_interval_seconds: int = 60
     database_url: str = "sqlite:///./sharp_signal.db"
     z_score_threshold: float = 2.0

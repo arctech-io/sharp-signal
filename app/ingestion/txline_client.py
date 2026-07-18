@@ -146,14 +146,25 @@ class TxLineClient:
 
     # -- public API ---------------------------------------------------------
 
-    async def get_fixtures(self) -> list[dict]:
+    async def get_fixtures(self, competition_filter: str | None = None) -> list[dict]:
         """Fetch current fixture snapshots from TxLINE.
+
+        Args:
+            competition_filter: If set, only fixtures whose ``Competition``
+                matches this string (case-insensitive substring) are returned.
 
         Returns:
             Raw fixture dicts from the API.
         """
         resp = await self._request("GET", "fixtures/snapshot")
-        return resp.json()
+        fixtures = resp.json()
+        if competition_filter:
+            needle = competition_filter.lower()
+            fixtures = [
+                f for f in fixtures
+                if needle in str(f.get("Competition", "")).lower()
+            ]
+        return fixtures
 
     async def get_odds_for_fixture(self, fixture_id: int) -> list[dict]:
         """Fetch odds snapshot for a specific fixture.
@@ -187,13 +198,17 @@ class TxLineClient:
         resp = await self._request("GET", f"scores/snapshot/{fixture_id}")
         return resp.json()
 
-    async def fetch_all_odds(self) -> list[OddsUpdate]:
+    async def fetch_all_odds(self, competition_filter: str | None = None) -> list[OddsUpdate]:
         """Fetch fixtures then odds for each, normalized to OddsUpdate.
+
+        Args:
+            competition_filter: If set, only fixtures from this competition
+                are ingested (case-insensitive substring match on ``Competition``).
 
         Returns:
             List of OddsUpdate models ready for persistence.
         """
-        fixtures = await self.get_fixtures()
+        fixtures = await self.get_fixtures(competition_filter=competition_filter)
         all_odds: list[OddsUpdate] = []
 
         for fx in fixtures:

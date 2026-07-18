@@ -2,6 +2,8 @@
 
 Sharp Signal is a real-time betting odds monitoring service. It ingests World Cup odds from the TxLINE API, detects statistically significant movements ("sharp signals"), tracks whether those signals were correct after match outcomes are finalised, and serves a live dashboard.
 
+> **Built for the [TxODDS World Cup hackathon](https://earn.superteam.fun) on Superteam Earn** — a fully autonomous agent that ingests live TxLINE World Cup feeds, flags sharp odds movements, and tracks prediction accuracy with zero manual intervention.
+
 ## How It Works
 
 1. **Poll** — A background loop fetches odds snapshots from the TxLINE API every `POLL_INTERVAL_SECONDS`.
@@ -82,7 +84,9 @@ All settings are loaded from environment variables (or a `.env` file). Copy `.en
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `TXLINE_API_KEY` | `""` | TxLINE JWT bearer token |
+| `TXLINE_API_TOKEN` | `""` | TxLINE API token (`X-Api-Token` header) |
 | `TXLINE_BASE_URL` | `""` | TxLINE API base URL |
+| `TXLINE_COMPETITION_FILTER` | `World Cup` | Only ingest fixtures whose competition contains this string (case-insensitive) |
 | `POLL_INTERVAL_SECONDS` | `60` | Seconds between ingestion cycles |
 | `DATABASE_URL` | `sqlite:///./sharp_signal.db` | SQLAlchemy database URL |
 | `Z_SCORE_THRESHOLD` | `2.0` | Z-score at which a movement is flagged as a signal |

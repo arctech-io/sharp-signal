@@ -94,7 +94,9 @@ async def _poll_cycle(engine: DetectionEngine) -> None:
         api_token=settings.txline_api_token,
     ) as client:
         try:
-            fixtures = await client.get_fixtures()
+            fixtures = await client.get_fixtures(
+                competition_filter=settings.txline_competition_filter or None
+            )
         except TxLineError:
             logger.exception("Failed to fetch fixtures from TxLINE — will retry next cycle")
             return
@@ -106,7 +108,9 @@ async def _poll_cycle(engine: DetectionEngine) -> None:
         _cache_fixtures(fixtures)
 
         try:
-            odds_updates = await client.fetch_all_odds()
+            odds_updates = await client.fetch_all_odds(
+                competition_filter=settings.txline_competition_filter or None
+            )
         except TxLineError:
             logger.exception("Failed to fetch odds from TxLINE — will retry next cycle")
             return
