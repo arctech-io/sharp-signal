@@ -72,7 +72,7 @@ And     the new odds value is appended to the rolling window
 
 ```gherkin
 Given   a rolling window of recent odds for match M, market "1X2", selection "Home"
-When    a new odds update arrives and the odds shorten (value decreases)
+When    a new odds update arrives and the price rises (TxLINE prices are probability × 1000, so a rise means the outcome is more likely)
 And     the percentage change exceeds PCT_THRESHOLD
 Or      the z-score exceeds Z_THRESHOLD
 Then    a Signal record is created with:
@@ -87,7 +87,7 @@ And     the signal is persisted to the database
 
 ```gherkin
 Given   a rolling window of recent odds for match M, market "Over/Under 2.5", selection "Over"
-When    a new odds update arrives and the odds drift (value increases)
+When    a new odds update arrives and the price falls (less likely)
 And     the percentage change exceeds PCT_THRESHOLD
 Or      the z-score exceeds Z_THRESHOLD
 Then    a Signal record is created with:
@@ -245,3 +245,4 @@ And     the sentence is suitable for a demo video and judge review
 | `PCT_CHANGE_THRESHOLD`    | `5.0`    | Percentage change above which a signal fires |
 | `ROLLING_WINDOW_SIZE`     | `20`     | Number of recent odds snapshots to compare   |
 | `MIN_WINDOW_SIZE`         | `5`      | Minimum snapshots before detection activates |
+| `SIGNAL_COOLDOWN_SECONDS` | `600`    | Suppress duplicate same-direction signals within this window |

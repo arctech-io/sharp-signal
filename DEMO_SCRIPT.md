@@ -32,9 +32,9 @@ _Navigate to `localhost:8000`._
 > _Wait for a signal card to appear on dashboard, or fast-forward a video clip._
 
 - "A signal just fired. Let's look at the detail."
-- Point to the card: match ID, market (1X2), selection (Home), direction (DRIFTING).
+- Point to the card: match ID, market (1X2), selection (Home), direction (SHORTENING).
 - "Confidence is 82.1 — well past the thresholds."
-- Read the reason: _"Odds moved 12.3% in 8 minutes, 3.1 standard deviations from the recent average — sharp drifting."_
+- Read the reason: _"Odds moved 12.3% over 8 observations, 3.1 standard deviations from the recent average — sharp shortening."_
 - "That's not a hunch — that's math."
 
 _Optional: switch to terminal and show `GET /signals` JSON response._
@@ -48,7 +48,7 @@ _Optional: switch to terminal and show `GET /signals` JSON response._
 > _Switch to a resolved match or fast-forward to a state where matches have finished._
 
 - "Once a match ends, the resolver fetches the final score from TxLINE."
-- "If odds shortened on a team and they won → correct signal. If they drifted → incorrect."
+- "If odds shortened (price rose) on a team and they won → correct signal. If they drifted (price fell) → incorrect."
 - "The accuracy tracker updates automatically: `GET /accuracy`."
 - "This turns signals from interesting trivia into a measurable track record."
 
@@ -69,7 +69,7 @@ _Optional: switch to terminal and show `GET /signals` JSON response._
 
 ## 3:30 – 4:00 — Testing & deployment
 
-- "129 tests pass. Every pure math function has edge-case coverage."
+- "133 tests pass. Every pure math function has edge-case coverage."
 - "Deployed via Docker to Railway with one build command."
 - "Graceful shutdown, rate-limit respect, no secrets in code."
 

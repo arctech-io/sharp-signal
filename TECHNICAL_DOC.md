@@ -32,10 +32,10 @@ TxLINE API ──► Ingestion ──► Detection ──► Storage ──► A
 - On each new odds update:
   - Computes the **z-score** of the new value against the window mean + std.
   - Computes the **absolute percent change** from the previous value.
-  - If either exceeds its threshold, a `Signal` is emitted with:
-    - Direction: `SHORTENING` (odds decreased → outcome became more likely) or `DRIFTING` (odds increased → outcome became less likely).
-    - Confidence: 0–100 score derived from how far past the thresholds the move extended.
-    - Reason: one-sentence human-readable explanation (e.g. _"Odds moved 12.3% in 8 minutes, 3.1 standard deviations from the recent average — sharp shortening."_).
+   - If either exceeds its threshold, a `Signal` is emitted with:
+     - Direction: `SHORTENING` (price rose → outcome became more likely) or `DRIFTING` (price fell → outcome became less likely). TxLINE prices are encoded as probability × 1000, so a higher price means the selection is *more* likely — hence "shortening" maps to a price increase, not a decrease.
+     - Confidence: 0–100 score derived from how far past the thresholds the move extended.
+     - Reason: one-sentence human-readable explanation (e.g. _"Odds moved 12.3% over 8 observations, 3.1 standard deviations from the recent average — sharp shortening."_).
 - Pure math functions, no I/O, fully testable in isolation.
 
 ### 3. Tracking / Resolution (`app/detection/resolver.py`)
@@ -43,9 +43,9 @@ TxLINE API ──► Ingestion ──► Detection ──► Storage ──► A
 - After a match finishes, the resolver fetches `GET /api/scores/snapshot/{fixtureId}` from TxLINE.
 - Parses the final score (looks for `action=game_finalised` or `statusId=100`).
 - For each pending signal on that match, determines correctness:
-  - **SHORTENING signal + selection won** → CORRECT.
+  - **SHORTENING signal + selection won** → CORRECT (odds pointed the right way).
   - **SHORTENING signal + selection lost** → INCORRECT.
-  - **DRIFTING signal + selection lost** → CORRECT.
+  - **DRIFTING signal + selection lost** → CORRECT (odds pointed the right way).
   - **DRIFTING signal + selection won** → INCORRECT.
 - Updates accuracy stats: total resolved, correct count, incorrect count, accuracy percentage.
 
@@ -113,11 +113,11 @@ sharp-signal/
 │   │   └── models.py          # Pydantic data models
 │   └── main.py                # FastAPI app + background loop
 ├── tests/
-│   ├── test_detection.py      # 44 pure-math + engine tests
-│   ├── test_resolver.py       # 28 resolver logic tests
-│   ├── test_storage.py        # 19 CRUD tests
-│   ├── test_txline_client.py  # 20 client + edge case tests
-│   ├── test_routes.py         # 11 API endpoint tests
+│   ├── test_detection.py      # 47 pure-math + engine tests
+│   ├── test_resolver.py       # 29 resolver logic tests
+│   ├── test_storage.py        # 21 CRUD tests
+│   ├── test_txline_client.py  # 19 client + edge case tests
+│   ├── test_routes.py         # 10 API endpoint tests
 │   └── test_integration.py    # 7 full pipeline tests
 ├── Dockerfile
 ├── Procfile
@@ -125,4 +125,4 @@ sharp-signal/
 └── README.md
 ```
 
-129 tests total, all passing.
+133 tests total, all passing.

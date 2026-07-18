@@ -57,23 +57,25 @@ pytest -v
 
 ## TxLINE API Feedback
 
-_Edit this section with your actual experience of the TxLINE API._
-
 ### What worked well
 
-- _[e.g. "Snapshot endpoints were fast and returned consistent data."]_
-- _[e.g. "Auth via Bearer + X-Api-Token was straightforward."]_
+- **Single normalised schema.** Every competition returns the same JSON shape, so one client handles all World Cup fixtures without per-league branching.
+- **Snapshot endpoints are fast and consistent.** `fixtures/snapshot`, `odds/snapshot/{fixtureId}`, and `scores/snapshot/{fixtureId}` returned clean, stable payloads on every poll.
+- **Auth was straightforward.** JWT `Authorization: Bearer` + `X-Api-Token` header worked first try.
+- **Zero-cost access** for the hackathon made it trivial to poll every 60s against live data.
 
 ### Where I hit friction
 
-- _[e.g. "Odds values are int32 × 1000 — easy enough to normalise but not documented."]_
-- _[e.g. "Scores snapshot returns multiple entries per match; had to infer the finalised one from action=game_finalised."]_
-- _[e.g. "No rate-limit headers returned, so I added a defensive 0.5s delay between fixture calls."]_
+- **Odds values are probability × 1000, not decimal odds.** A selection becoming *more likely* shows as a *higher* number (e.g. `2376` = 2.376 implied probability). This is the opposite of decimal-odds intuition, so direction (shortening/drifting) must be inverted relative to a typical bookmaker feed. Easy to normalise, but not documented.
+- **Scores snapshot returns multiple entries per match.** Each match emits several `Action` records (`comment`, `coverage_update`, …); the final result must be inferred from `Action == "game_finalised"` (or `StatusId == 100` / `Period == 100`). Live/in-progress scores are intentionally ignored so signals never resolve against an unfinished match.
+- **No rate-limit headers.** I added a defensive 0.5s delay between per-fixture odds requests to avoid hammering the feed.
+- **Dev feed clock.** In the dev environment the World Cup fixtures were scheduled but final scores did not appear within the build window, so the resolver holds signals pending until the feed emits finalisation. The code path is verified by tests; live resolution depends on the feed emitting `game_finalised`.
 
 ### Suggested improvements
 
-- _[e.g. "A single endpoint that returns odds + scores for all fixtures would reduce the N+1 request pattern."]_
-- _[e.g. "Document the StatusId / period / Action fields that signal a finalised score."]_
+- **A combined endpoint** returning odds + scores for all fixtures in one call would remove the N+1 request pattern (one `odds/snapshot` per fixture).
+- **Document the `StatusId` / `Period` / `Action` finalisation fields** explicitly, and publish the exact probability-encoding (×1000) in the quickstart.
+- **A `finalised` boolean** on each score entry would let consumers skip the action-string inference.
 
 ---
 
@@ -94,6 +96,7 @@ All settings are loaded from environment variables (or a `.env` file). Copy `.en
 | `PCT_CHANGE_THRESHOLD` | `5.0` | Minimum percent change between consecutive odds to flag |
 | `ROLLING_WINDOW_SIZE` | `20` | Number of recent odds values used for mean/std calculation |
 | `MIN_WINDOW_SIZE` | `5` | Minimum data points before detection activates for a market |
+| `SIGNAL_COOLDOWN_SECONDS` | `600` | Suppress a repeated same-direction signal for the same market/selection within this window |
 
 ### Tuning the Thresholds
 
