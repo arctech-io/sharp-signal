@@ -81,8 +81,12 @@ def z_score(value: float, mean: float, std: float) -> float:
 
 
 def determine_direction(old: float, new: float) -> SignalDirection:
-    """Return SHORTENING if odds decreased, DRIFTING if they increased."""
-    if new < old:
+    """Return SHORTENING if the outcome became MORE likely, DRIFTING if less.
+
+    TxLINE prices are probability × 1000 (higher = more likely), so a rise in
+    price means the selection shortened (became more likely).
+    """
+    if new > old:
         return SignalDirection.SHORTENING
     return SignalDirection.DRIFTING
 

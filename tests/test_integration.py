@@ -105,7 +105,7 @@ class TestFullPipeline:
         assert len(signals_created) == 1
         sig = signals_created[0]
         assert sig.match_id == "WC-001"
-        assert sig.direction == SignalDirection.DRIFTING
+        assert sig.direction == SignalDirection.SHORTENING
         assert sig.confidence > 50
 
         # Verify odds window was persisted
@@ -130,10 +130,10 @@ class TestFullPipeline:
         # Step 5: Check accuracy
         stats = get_accuracy_stats(db_session)
         assert stats.total_resolved == 1
-        # Odds drifted on Home, Home won → signal is INCORRECT
-        assert stats.incorrect == 1
-        assert stats.correct == 0
-        assert stats.overall_accuracy_pct == 0.0
+        # Price shortened on Home (became more likely), Home won → CORRECT
+        assert stats.correct == 1
+        assert stats.incorrect == 0
+        assert stats.overall_accuracy_pct == 100.0
 
     @pytest.mark.asyncio
     async def test_multiple_matches_concurrent(self, db_session):
@@ -277,9 +277,40 @@ class TestFullPipeline:
 
         stats = get_accuracy_stats(db_session)
         assert stats.total_resolved == 3
-        # All signals are direction=DRIFTING (odds 2.00→2.50) on Home selection
-        # M1: drifted + home won → INCORRECT (Home DID win despite drift)
-        # M2: drifted + draw → CORRECT (Home didn't win)
-        # M3: drifted + away won → CORRECT (Home didn't win)
-        assert stats.correct == 2
-        assert stats.incorrect == 1
+        # All signals are direction=SHORTENING (price 2.00→2.50 = more likely) on Home
+        # M1: shortened + home won → CORRECT
+        # M2: shortened + draw → INCORRECT (Home didn't win)
+        # M3: shortened + away won → INCORRECT (Home didn't win)
+        assert stats.correct == 1
+        assert stats.incorrect == 2
+
+    @pytest.mark.asyncio
+    async def test_live_format_selection_mapping(self, db_session):
+        """
+        The live TxLINE feed stores selection as 'part1'/'part2' and market as
+        '1X2_PARTICIPANT_RESULT'. A shortening signal on part1 that wins must
+        resolve CORRECT (regression for the part1/home mapping bug).
+        """
+        from app.detection.resolver import resolve_signals_for_match
+        from app.storage.db import save_signal
+
+        engine = DetectionEngine(DetectionConfig(
+            pct_change_threshold=5.0, z_score_threshold=2.0, min_window_size=3,
+        ))
+        # Stable then sharp shortening on part1 (Home)
+        for i in range(5):
+            engine.process(_make_odds_update("WC-002", "1X2_PARTICIPANT_RESULT", "part1", 2.00, i))
+        sig = engine.process(_make_odds_update("WC-002", "1X2_PARTICIPANT_RESULT", "part1", 2.50, 5))
+        assert sig is not None and sig.direction == SignalDirection.SHORTENING
+        save_signal(db_session, sig)
+
+        mock_client = AsyncMock()
+        mock_client.get_scores_snapshot.return_value = [
+            {"Action": "game_finalised", "Participant1Goals": 2, "Participant2Goals": 0}
+        ]
+        resolved = await resolve_signals_for_match(mock_client, db_session, "WC-002")
+        assert resolved == 1
+
+        stats = get_accuracy_stats(db_session)
+        assert stats.correct == 1
+        assert stats.incorrect == 0

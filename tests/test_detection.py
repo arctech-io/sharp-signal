@@ -96,10 +96,11 @@ class TestZScore:
 
 class TestDetermineDirection:
     def test_shortening(self):
-        assert determine_direction(2.5, 2.1) == SignalDirection.SHORTENING
+        # TxLINE prices are probability×1000: a rise means more likely (shortening)
+        assert determine_direction(2.5, 2.1) == SignalDirection.DRIFTING
 
     def test_drifting(self):
-        assert determine_direction(2.5, 3.0) == SignalDirection.DRIFTING
+        assert determine_direction(2.5, 3.0) == SignalDirection.SHORTENING
 
     def test_unchanged(self):
         # Same value → not shortening, defaults to DRIFTING
@@ -208,7 +209,7 @@ class TestCheckForSignal:
         return w
 
     def test_big_jump_triggers_signal(self):
-        """Odds jump from 2.00 → 2.50 (25%) should fire."""
+        """Price rise 2.00 → 2.50 (25%) = more likely → SHORTENING."""
         cfg = self._cfg(pct_change_threshold=5.0, z_score_threshold=2.0)
         # Window of stable odds at 2.00, then a big jump
         window = self._window([2.00, 2.01, 1.99, 2.00, 2.01, 2.00, 1.99, 2.00])
@@ -222,13 +223,13 @@ class TestCheckForSignal:
             config=cfg,
         )
         assert signal is not None
-        assert signal.direction == SignalDirection.DRIFTING
+        assert signal.direction == SignalDirection.SHORTENING
         assert signal.confidence > 50.0
         assert "25.0%" in signal.reason
-        assert "sharp drifting" in signal.reason
+        assert "sharp shortening" in signal.reason
 
     def test_big_drop_triggers_signal(self):
-        """Odds drop from 3.00 → 2.40 (20%) should fire as shortening."""
+        """Price fall 3.00 → 2.40 (20%) = less likely → DRIFTING."""
         cfg = self._cfg(pct_change_threshold=5.0, z_score_threshold=2.0)
         window = self._window([3.00, 3.01, 2.99, 3.00, 3.01, 3.00])
         signal = check_for_signal(
@@ -241,9 +242,9 @@ class TestCheckForSignal:
             config=cfg,
         )
         assert signal is not None
-        assert signal.direction == SignalDirection.SHORTENING
+        assert signal.direction == SignalDirection.DRIFTING
         assert "20.0%" in signal.reason
-        assert "shortening" in signal.reason
+        assert "drifting" in signal.reason
 
     def test_normal_noise_does_not_trigger(self):
         """Small random fluctuations should NOT fire."""
@@ -324,8 +325,8 @@ class TestCheckForSignal:
         assert signal is not None
         # 10% move
         assert "10.0%" in signal.reason
-        # Direction
-        assert "drifting" in signal.reason
+        # Direction: price up = more likely = shortening
+        assert "shortening" in signal.reason
 
     def test_confidence_scales_with_magnitude(self):
         """A bigger move should produce higher confidence."""
@@ -373,13 +374,13 @@ class TestDetectionEngine:
                 match_id="M1", market="1X2", selection="Home",
                 odds_value=2.00, timestamp=_ts(i),
             ))
-        # Big jump
+        # Big jump (price up = more likely = shortening)
         signal = engine.process(OddsUpdate(
             match_id="M1", market="1X2", selection="Home",
             odds_value=2.50, timestamp=_ts(5),
         ))
         assert signal is not None
-        assert signal.direction == SignalDirection.DRIFTING
+        assert signal.direction == SignalDirection.SHORTENING
 
     def test_separate_windows_per_selection(self):
         engine = DetectionEngine(DetectionConfig(
@@ -524,10 +525,10 @@ class TestDetectionEngine:
             match_id="M1", market="1X2", selection="Home",
             odds_value=2.50, timestamp=_ts(5),
         ))
-        assert drift is not None and drift.direction == SignalDirection.DRIFTING
-        # Price falls back → shortening is a new direction → should fire
+        assert drift is not None and drift.direction == SignalDirection.SHORTENING
+        # Price falls back → drifting is a new direction → should fire
         shorten = engine.process(OddsUpdate(
             match_id="M1", market="1X2", selection="Home",
             odds_value=1.95, timestamp=_ts(6),
         ))
-        assert shorten is not None and shorten.direction == SignalDirection.SHORTENING
+        assert shorten is not None and shorten.direction == SignalDirection.DRIFTING

@@ -57,26 +57,28 @@ def _selection_won(selection: str, market: str, outcome: MatchOutcome) -> bool:
     `OVERUNDER_PARTICIPANT_GOALS`) resolve correctly.
     """
     m = market.lower()
+    sel = selection.lower()
 
     if "1x2" in m or "participant_result" in m:
-        if selection == "home":
+        # TxLINE selections arrive as part1 / draw / part2.
+        if sel in ("home", "part1"):
             return outcome.winner == "home"
-        elif selection == "away":
+        elif sel in ("away", "part2"):
             return outcome.winner == "away"
-        elif selection == "draw":
+        elif sel == "draw":
             return outcome.winner == "draw"
-    elif "over" in m and "under" in m:
+    elif "overunder" in m or ("over" in m and "under" in m):
         total_goals = outcome.home_goals + outcome.away_goals
         line = _extract_overunder_line(m)
-        if selection == "over":
+        if sel == "over":
             return total_goals > line
-        elif selection == "under":
+        elif sel == "under":
             return total_goals <= line
     elif "both teams" in m or "btts" in m:
         both_scored = outcome.home_goals > 0 and outcome.away_goals > 0
-        if selection == "yes":
+        if sel == "yes":
             return both_scored
-        elif selection == "no":
+        elif sel == "no":
             return not both_scored
 
     # Unknown market — cannot determine correctness.
