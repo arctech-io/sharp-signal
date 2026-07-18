@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     txline_base_url: str = ""
     txline_competition_filter: str = "World Cup"
     poll_interval_seconds: int = 60
+    sharp_reset_db: bool = False
     database_url: str = "sqlite:///./sharp_signal.db"
     z_score_threshold: float = 2.0
     pct_change_threshold: float = 5.0

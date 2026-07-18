@@ -173,29 +173,27 @@ async def resolve_signals_for_match(
 def _parse_match_outcome(match_id: str, scores_data: list[dict]) -> MatchOutcome | None:
     """Parse a MatchOutcome from TxLINE scores snapshot data.
 
-    Looks for action=game_finalised (statusId=100, period=100) entries.
-    Falls back to the latest score entry if no finalised marker is found.
+    Only returns a result once the match is actually finalised
+    (action=game_finalised, StatusId=100, or Period=100). Live/in-progress
+    scores are intentionally ignored so signals are never resolved against an
+    unfinished match. Returns None if no finalised marker is present.
     """
     finalised = None
-    latest = None
 
     for entry in scores_data:
         action = str(entry.get("Action", "")).lower()
         status_id = entry.get("StatusId")
         period = entry.get("Period")
 
-        latest = entry
-
         if action == "game_finalised" or status_id == 100 or period == 100:
             finalised = entry
             break
 
-    entry = finalised or latest
-    if entry is None:
+    if finalised is None:
         return None
 
-    home_goals = entry.get("Participant1Goals") or entry.get("HomeGoals") or 0
-    away_goals = entry.get("Participant2Goals") or entry.get("AwayGoals") or 0
+    home_goals = finalised.get("Participant1Goals") or finalised.get("HomeGoals") or 0
+    away_goals = finalised.get("Participant2Goals") or finalised.get("AwayGoals") or 0
 
     try:
         home_goals = int(home_goals)

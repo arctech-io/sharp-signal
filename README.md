@@ -87,6 +87,7 @@ All settings are loaded from environment variables (or a `.env` file). Copy `.en
 | `TXLINE_API_TOKEN` | `""` | TxLINE API token (`X-Api-Token` header) |
 | `TXLINE_BASE_URL` | `""` | TxLINE API base URL |
 | `TXLINE_COMPETITION_FILTER` | `World Cup` | Only ingest fixtures whose competition contains this string (case-insensitive) |
+| `SHARP_RESET_DB` | `false` | If `true`, wipe the database on startup (fresh demo slate) |
 | `POLL_INTERVAL_SECONDS` | `60` | Seconds between ingestion cycles |
 | `DATABASE_URL` | `sqlite:///./sharp_signal.db` | SQLAlchemy database URL |
 | `Z_SCORE_THRESHOLD` | `2.0` | Z-score at which a movement is flagged as a signal |

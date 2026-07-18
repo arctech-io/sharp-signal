@@ -152,26 +152,27 @@ class TestParseMatchOutcome:
         assert outcome.away_goals == 1
         assert outcome.winner == "home"
 
-    def test_no_finalised_uses_latest(self):
+    def test_no_finalised_returns_none(self):
         data = [
             {"Action": "score_update", "Participant1Goals": 0, "Participant2Goals": 0},
             {"Action": "score_update", "Participant1Goals": 1, "Participant2Goals": 1},
         ]
         outcome = _parse_match_outcome("M1", data)
-        assert outcome is not None
-        assert outcome.home_goals == 1
-        assert outcome.away_goals == 1
-        assert outcome.winner == "draw"
+        assert outcome is None
 
     def test_empty_data(self):
         assert _parse_match_outcome("M1", []) is None
 
-    def test_unknown_fields_fallback(self):
-        data = [{"HomeGoals": 3, "AwayGoals": 2}]
+    def test_unknown_fields_with_finalised_marker(self):
+        data = [{"Action": "game_finalised", "HomeGoals": 3, "AwayGoals": 2}]
         outcome = _parse_match_outcome("M1", data)
         assert outcome is not None
         assert outcome.home_goals == 3
         assert outcome.winner == "home"
+
+    def test_unknown_fields_without_finalised_marker_returns_none(self):
+        data = [{"HomeGoals": 3, "AwayGoals": 2}]
+        assert _parse_match_outcome("M1", data) is None
 
     def test_non_numeric_goals_returns_none(self):
         data = [{"Participant1Goals": "abc", "Participant2Goals": 1}]
@@ -250,7 +251,8 @@ class TestResolveSignalsForMatch:
             {"Action": "score_update", "Participant1Goals": 1, "Participant2Goals": 0}
         ).json.return_value
         count = await resolve_signals_for_match(client, db_session, "M1")
-        assert count == 1
+        # No finalised marker → match not finished → signals stay pending.
+        assert count == 0
 
     @pytest.mark.asyncio
     async def test_happy_path_resolves_signals(self, db_session):

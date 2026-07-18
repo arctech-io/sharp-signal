@@ -222,6 +222,16 @@ async def lifespan(app: FastAPI):
     shutdown_event = asyncio.Event()
 
     logger.info("Initializing database")
+    if settings.sharp_reset_db:
+        import os
+
+        from app.storage.db import engine as _db_engine
+
+        db_path = settings.database_url.replace("sqlite:///", "")
+        logger.warning("SHARP_RESET_DB set — dropping all tables and starting fresh")
+        _db_engine.dispose()
+        if db_path and os.path.exists(db_path):
+            os.remove(db_path)
     init_db()
     logger.info("Starting background poll loop")
     _background_task = asyncio.create_task(_background_loop(shutdown_event))
