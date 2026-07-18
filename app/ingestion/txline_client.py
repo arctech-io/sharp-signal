@@ -232,11 +232,34 @@ class TxLineClient:
         return all_odds
 
 
+def _market_key(
+    super_odds_type: str,
+    market_params: str | None,
+    market_period: str | None,
+) -> str:
+    """Build a unique market identifier that includes the bet line and period.
+
+    TxLINE returns many Over/Under and Asian Handicap lines (e.g. 2.5, 3.5,
+    4.5) and both full-match and ``half=1`` periods under the *same*
+    ``SuperOddsType``.  Treating them as one series would produce absurd
+    "moves" (e.g. a 266% jump from a 2.5-line price to a 4.5-line price).
+    Appending the line/period keeps detection per-line.
+    """
+    parts = [super_odds_type]
+    if market_params:
+        parts.append(str(market_params))
+    if market_period:
+        parts.append(str(market_period))
+    return " ".join(parts)
+
+
 def _normalize_odds(fixture_id: int, odds_payloads: list[dict]) -> list[OddsUpdate]:
     """Convert raw TxLINE OddsPayload list into OddsUpdate models.
 
     Each OddsPayload has PriceNames[] and Prices[] arrays.  We emit one
-    OddsUpdate per (market, selection) pair.
+    OddsUpdate per (market, selection) pair.  The market key includes the
+    bet line and period (from ``MarketParameters`` / ``MarketPeriod``) so
+    different Over/Under or handicap lines are tracked as separate series.
 
     Args:
         fixture_id: The fixture these odds belong to.
@@ -248,7 +271,12 @@ def _normalize_odds(fixture_id: int, odds_payloads: list[dict]) -> list[OddsUpda
     updates: list[OddsUpdate] = []
 
     for payload in odds_payloads:
-        market = payload.get("SuperOddsType", "unknown")
+        super_odds_type = payload.get("SuperOddsType", "unknown")
+        market = _market_key(
+            super_odds_type,
+            payload.get("MarketParameters"),
+            payload.get("MarketPeriod"),
+        )
         price_names = payload.get("PriceNames") or []
         raw_prices = payload.get("Prices") or []
         ts_ms = payload.get("Ts", 0)

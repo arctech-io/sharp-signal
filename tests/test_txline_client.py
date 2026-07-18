@@ -413,6 +413,39 @@ def test_normalize_odds_zero_timestamp():
     assert updates[0].timestamp.year == 1970
 
 
+def test_normalize_odds_includes_line_and_period():
+    """Different Over/Under lines are tracked as separate markets.
+
+    TxLINE returns many lines (2.5, 3.5, ...) under one SuperOddsType. The
+    market key must include the line/period so detection doesn't merge them
+    into a single (false) series.
+    """
+    payload = [
+        {"FixtureId": 1, "Ts": 1000, "SuperOddsType": "OVERUNDER_PARTICIPANT_GOALS",
+         "MarketParameters": "line=2.5", "PriceNames": ["over", "under"], "Prices": [1680, 2470]},
+        {"FixtureId": 1, "Ts": 1000, "SuperOddsType": "OVERUNDER_PARTICIPANT_GOALS",
+         "MarketParameters": "line=3.5", "PriceNames": ["over", "under"], "Prices": [4650, 1274]},
+        {"FixtureId": 1, "Ts": 1000, "SuperOddsType": "OVERUNDER_PARTICIPANT_GOALS",
+         "MarketParameters": "line=2.5", "MarketPeriod": "half=1",
+         "PriceNames": ["over", "under"], "Prices": [1687, 2457]},
+        {"FixtureId": 1, "Ts": 1000, "SuperOddsType": "1X2_PARTICIPANT_RESULT",
+         "PriceNames": ["part1", "draw", "part2"], "Prices": [49300, 13400, 1105]},
+    ]
+    updates = _normalize_odds(1, payload)
+    markets = {u.market for u in updates}
+    assert "OVERUNDER_PARTICIPANT_GOALS line=2.5" in markets
+    assert "OVERUNDER_PARTICIPANT_GOALS line=3.5" in markets
+    assert "OVERUNDER_PARTICIPANT_GOALS line=2.5 half=1" in markets
+    # 1X2 has no line/period, so it stays bare
+    assert "1X2_PARTICIPANT_RESULT" in markets
+    # under@2.5 vs under@3.5 are distinct series, not the same market
+    under_25 = [u for u in updates if u.market.endswith("line=2.5") and u.selection == "under"]
+    under_35 = [u for u in updates if u.market.endswith("line=3.5") and u.selection == "under"]
+    assert len(under_25) == 1 and len(under_35) == 1
+    assert under_25[0].odds_value == 2.47
+    assert under_35[0].odds_value == 1.274
+
+
 @pytest.mark.asyncio
 async def test_context_manager_closes_client():
     """__aexit__ closes the httpx client."""

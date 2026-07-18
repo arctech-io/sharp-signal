@@ -368,7 +368,20 @@
       return 'Incorrect';
     }
     function marketLabel(m) {
-      return m.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+      const s = (m || '').toLowerCase();
+      let base = m;
+      if (s.includes('overunder')) base = 'Over/Under';
+      else if (s.includes('asianhandicap')) base = 'Asian Handicap';
+      else if (s.includes('1x2') || s.includes('participant_result')) base = '1X2';
+      else if (s.includes('both') || s.includes('btts')) base = 'BTTS';
+      else base = m.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+      // Preserve the bet line / period (e.g. "line=3.5 half=1") for clarity.
+      const line = (m.match(/line=[^\s]+/i) || [])[0];
+      const period = (m.match(/half=[^\s]+/i) || [])[0];
+      let suffix = '';
+      if (line) suffix += ' ' + line.replace('line=', '');
+      if (period) suffix += ' (' + period.replace('half=', 'H') + ')';
+      return base + suffix;
     }
     function selectionLabel(s) {
       if (s === 'over') return 'Over';
