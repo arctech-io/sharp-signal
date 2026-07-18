@@ -17,6 +17,7 @@ from app.detection.resolver import resolve_all_pending
 from app.ingestion.txline_client import TxLineClient, TxLineError
 from app.storage import init_db, save_odds_update, save_signal
 from app.storage.db import SessionLocal
+from app.storage.models import MatchMeta
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -46,6 +47,38 @@ def _get_last_poll() -> datetime | None:
 # ---------------------------------------------------------------------------
 
 
+def _cache_fixtures(fixtures: list[dict]) -> None:
+    """Persist fixture metadata so dashboards can resolve match_ids to teams."""
+    from app.storage.db import save_match
+
+    db = SessionLocal()
+    try:
+        for fx in fixtures:
+            match_id = fx.get("FixtureId")
+            if match_id is None:
+                continue
+            start_ms = fx.get("StartTime")
+            start_time = (
+                datetime.fromtimestamp(start_ms / 1000, tz=timezone.utc)
+                if start_ms
+                else None
+            )
+            save_match(
+                db,
+                MatchMeta(
+                    match_id=str(match_id),
+                    home_team=fx.get("Participant1", "Unknown"),
+                    away_team=fx.get("Participant2", "Unknown"),
+                    competition=fx.get("Competition", "Unknown"),
+                    start_time=start_time,
+                ),
+            )
+    except Exception:
+        logger.exception("Error caching fixture metadata")
+    finally:
+        db.close()
+
+
 async def _poll_cycle(engine: DetectionEngine) -> None:
     """Run one ingestion → detection cycle.  Never raises."""
     global _last_successful_poll
@@ -60,6 +93,18 @@ async def _poll_cycle(engine: DetectionEngine) -> None:
         jwt=settings.txline_api_key,
         api_token=settings.txline_api_token,
     ) as client:
+        try:
+            fixtures = await client.get_fixtures()
+        except TxLineError:
+            logger.exception("Failed to fetch fixtures from TxLINE — will retry next cycle")
+            return
+        except Exception:
+            logger.exception("Unexpected error fetching fixtures — will retry next cycle")
+            return
+
+        # Cache fixture metadata so the dashboard can show team names
+        _cache_fixtures(fixtures)
+
         try:
             odds_updates = await client.fetch_all_odds()
         except TxLineError:

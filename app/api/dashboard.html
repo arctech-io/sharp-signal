@@ -15,327 +15,151 @@
     }
 
     .container {
-      max-width: 960px;
+      max-width: 1000px;
       margin: 0 auto;
-      padding: 32px 24px;
+      padding: 28px 20px 60px;
     }
 
     header {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 24px;
+      gap: 10px;
       flex-wrap: wrap;
+      margin-bottom: 18px;
     }
-    header h1 {
-      font-size: 22px;
-      font-weight: 600;
-    }
+    header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
     .live-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: #3fb950;
-      display: inline-block;
+      width: 9px; height: 9px; border-radius: 50%;
+      background: #3fb950; display: inline-block;
       animation: pulse 2s infinite;
     }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
-    .header-sub {
-      font-size: 13px;
-      color: #8b949e;
-      margin-left: auto;
-    }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .header-sub { margin-left: auto; font-size: 12px; color: #8b949e; }
 
-    .explainer-card {
+    /* Onboarding explainer */
+    .explainer {
       background: linear-gradient(135deg, #161b22 0%, #1c2330 100%);
-      border: 1px solid #30363d;
-      border-radius: 12px;
-      padding: 20px 24px;
-      margin-bottom: 24px;
-      font-size: 14px;
-      line-height: 1.7;
-      color: #c9d1d9;
+      border: 1px solid #30363d; border-radius: 12px;
+      padding: 18px 22px; margin-bottom: 22px;
+      font-size: 14px; line-height: 1.6; color: #c9d1d9;
     }
-    .explainer-card strong {
-      color: #f0f6fc;
+    .explainer strong { color: #f0f6fc; }
+    .explainer .hl-g { color: #3fb950; }
+    .explainer .hl-r { color: #f85149; }
+    .explainer .terms { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+    .explainer .term {
+      flex: 1; min-width: 150px; background: #0d1117;
+      border: 1px solid #21262d; border-radius: 8px; padding: 10px 14px;
     }
-    .explainer-card .highlight-green { color: #3fb950; }
-    .explainer-card .highlight-red { color: #f85149; }
-    .explainer-card .row {
-      display: flex;
-      gap: 24px;
-      flex-wrap: wrap;
-      margin-top: 12px;
-    }
-    .explainer-card .term {
-      flex: 1;
-      min-width: 160px;
-      background: #0d1117;
-      border-radius: 8px;
-      padding: 12px 16px;
-      border: 1px solid #21262d;
-    }
-    .explainer-card .term-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #8b949e;
-      margin-bottom: 2px;
-    }
-    .explainer-card .term-value {
-      font-size: 14px;
-      font-weight: 500;
+    .explainer .term-label {
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+      color: #8b949e; margin-bottom: 2px;
     }
 
+    /* Accuracy hero */
     .hero {
-      background: #161b22;
-      border: 1px solid #21262d;
-      border-radius: 12px;
-      padding: 24px 28px;
-      margin-bottom: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 16px;
+      background: #161b22; border: 1px solid #21262d; border-radius: 12px;
+      padding: 22px 26px; margin-bottom: 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 16px;
     }
-    .hero-left .label {
-      font-size: 13px;
-      color: #8b949e;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      margin-bottom: 4px;
-    }
-    .hero-left .value {
-      font-size: 42px;
-      font-weight: 700;
-      letter-spacing: -1.5px;
-      line-height: 1;
-    }
-    .hero-left .value.good { color: #3fb950; }
-    .hero-left .value.mid  { color: #d29922; }
-    .hero-left .value.bad  { color: #f85149; }
-    .hero-left .value.na   { color: #484f58; }
-    .hero-right {
-      text-align: right;
-      font-size: 13px;
-      color: #8b949e;
-      line-height: 1.7;
-    }
-    .hero-right span { color: #e1e4e8; font-weight: 500; }
+    .hero .label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.6px; color: #8b949e; margin-bottom: 4px; }
+    .hero .value { font-size: 40px; font-weight: 800; letter-spacing: -1.5px; line-height: 1; }
+    .hero .value.good { color: #3fb950; }
+    .hero .value.mid  { color: #d29922; }
+    .hero .value.bad  { color: #f85149; }
+    .hero .value.na   { color: #484f58; }
+    .hero-right { text-align: right; font-size: 13px; color: #8b949e; line-height: 1.8; }
+    .hero-right span { color: #e1e4e8; font-weight: 600; }
 
     .section-title {
-      font-size: 13px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      color: #8b949e;
-      margin-bottom: 14px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      font-size: 13px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.6px; color: #8b949e; margin: 28px 0 14px;
+      display: flex; align-items: center; gap: 8px;
     }
-    .section-title .count {
-      font-size: 11px;
-      color: #484f58;
-      text-transform: none;
-      letter-spacing: 0;
-    }
+    .section-title .count { font-size: 11px; color: #484f58; text-transform: none; letter-spacing: 0; }
 
-    .signals-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+    /* Match group */
+    .match-group {
+      background: #161b22; border: 1px solid #21262d; border-radius: 12px;
+      margin-bottom: 14px; overflow: hidden;
     }
+    .match-head {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 18px; background: #0d1117;
+      border-bottom: 1px solid #21262d; flex-wrap: wrap;
+    }
+    .teams { font-size: 15px; font-weight: 600; }
+    .vs { color: #484f58; font-weight: 400; margin: 0 6px; }
+    .competition-tag {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.3px;
+      color: #d2a8ff; background: #211a2e; padding: 2px 8px; border-radius: 20px;
+    }
+    .kickoff { margin-left: auto; font-size: 12px; color: #8b949e; }
+
+    .signals-list { display: flex; flex-direction: column; }
     .signal-card {
-      background: #161b22;
-      border: 1px solid #21262d;
-      border-radius: 10px;
-      padding: 16px 20px;
-      transition: border-color 0.15s;
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 14px 18px; border-bottom: 1px solid #1c2128;
     }
-    .signal-card:hover { border-color: #388bfd44; }
-
-    .signal-top {
-      display: grid;
-      grid-template-columns: 48px 1fr auto;
-      gap: 14px;
-      align-items: start;
-    }
+    .signal-card:last-child { border-bottom: none; }
+    .signal-card:hover { background: #1a1f29; }
 
     .confidence-badge {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      font-weight: 700;
-      flex-shrink: 0;
-      position: relative;
+      width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; position: relative;
     }
     .confidence-badge.high { background: #0d2818; color: #3fb950; border: 2px solid #238636; }
     .confidence-badge.mid  { background: #2d1e00; color: #d29922; border: 2px solid #9e6a03; }
     .confidence-badge.low  { background: #2d1315; color: #f85149; border: 2px solid #da3633; }
     .confidence-badge[title]:hover::after {
-      content: attr(title);
-      position: absolute;
-      top: -32px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #1c2028;
-      color: #e1e4e8;
-      font-size: 11px;
-      font-weight: 400;
-      padding: 4px 8px;
-      border-radius: 4px;
-      white-space: nowrap;
-      border: 1px solid #30363d;
-      z-index: 10;
+      content: attr(title); position: absolute; top: -34px; left: 50%;
+      transform: translateX(-50%); background: #1c2028; color: #e1e4e8;
+      font-size: 11px; font-weight: 400; padding: 4px 8px; border-radius: 4px;
+      white-space: nowrap; border: 1px solid #30363d; z-index: 10;
     }
 
-    .signal-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 4px;
-    }
+    .signal-body { flex: 1; min-width: 0; }
+    .signal-line1 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .market-tag {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-      color: #79c0ff;
-      background: #0d2239;
-      padding: 2px 7px;
-      border-radius: 4px;
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;
+      color: #79c0ff; background: #0d2239; padding: 2px 7px; border-radius: 4px;
     }
-    .match-id {
-      font-size: 12px;
-      color: #484f58;
-    }
-    .selection {
-      font-weight: 600;
-      font-size: 15px;
-    }
+    .selection { font-weight: 600; font-size: 15px; }
     .direction {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      padding: 2px 7px;
-      border-radius: 4px;
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
+      padding: 2px 8px; border-radius: 4px;
     }
     .direction.shortening { background: #0d2818; color: #3fb950; }
     .direction.drifting   { background: #2d1315; color: #f85149; }
+    .odds-val { font-size: 13px; color: #8b949e; }
 
-    .signal-details {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-top: 6px;
-    }
-    .signal-detail-item {
-      font-size: 12px;
-      color: #8b949e;
-    }
-    .signal-detail-item .label {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      color: #484f58;
-      margin-right: 4px;
-    }
+    .signal-line2 { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 5px; font-size: 12px; color: #8b949e; }
+    .signal-line2 .label { text-transform: uppercase; font-size: 10px; letter-spacing: 0.3px; color: #484f58; margin-right: 3px; }
 
     .reason {
-      font-size: 13px;
-      color: #c9d1d9;
-      line-height: 1.5;
-      margin-top: 6px;
-      padding: 8px 12px;
-      background: #0d1117;
-      border-radius: 6px;
-      border: 1px solid #21262d;
+      margin-top: 7px; font-size: 13px; color: #c9d1d9; line-height: 1.5;
+      padding: 8px 12px; background: #0d1117; border-radius: 6px; border: 1px solid #21262d;
     }
     .reason strong { color: #f0f6fc; }
 
-    .status-badge-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
     .status-badge {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      padding: 4px 10px;
-      border-radius: 6px;
-      white-space: nowrap;
-      flex-shrink: 0;
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
+      padding: 4px 10px; border-radius: 6px; white-space: nowrap; flex-shrink: 0;
+      align-self: center;
     }
     .status-badge.pending   { background: #1c2028; color: #8b949e; border: 1px solid #30363d; }
     .status-badge.correct   { background: #0d2818; color: #3fb950; border: 1px solid #238636; }
     .status-badge.incorrect { background: #2d1315; color: #f85149; border: 1px solid #da3633; }
 
-    .status-hint {
-      font-size: 11px;
-      color: #484f58;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 64px 24px;
-      color: #484f58;
-      font-size: 15px;
-    }
+    .empty-state { text-align: center; padding: 60px 24px; color: #484f58; font-size: 15px; }
     .empty-state .icon { font-size: 32px; margin-bottom: 12px; display: block; }
 
-    .glossary-toggle {
-      font-size: 12px;
-      color: #58a6ff;
-      cursor: pointer;
-      margin-bottom: 16px;
-      display: inline-block;
-      user-select: none;
-    }
-    .glossary-toggle:hover { text-decoration: underline; }
-    .glossary {
-      display: none;
-      background: #0d1117;
-      border: 1px solid #21262d;
-      border-radius: 10px;
-      padding: 16px 20px;
-      margin-bottom: 20px;
-      font-size: 13px;
-      line-height: 1.7;
-    }
-    .glossary.open { display: block; }
-    .glossary dt {
-      color: #f0f6fc;
-      font-weight: 600;
-      margin-top: 10px;
-    }
-    .glossary dt:first-child { margin-top: 0; }
-    .glossary dd {
-      color: #8b949e;
-      margin-left: 0;
-    }
-
     footer {
-      margin-top: 40px;
-      padding-top: 16px;
-      border-top: 1px solid #21262d;
-      font-size: 12px;
-      color: #484f58;
-      display: flex;
-      justify-content: space-between;
+      margin-top: 40px; padding-top: 16px; border-top: 1px solid #21262d;
+      font-size: 12px; color: #484f58; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
     }
-    #last-updated { color: #8b949e; }
   </style>
 </head>
 <body>
@@ -346,29 +170,29 @@
       <span class="header-sub" id="last-updated"></span>
     </header>
 
-    <div class="explainer-card">
-      <strong>👋 What is this?</strong> Sharp Signal monitors World Cup betting odds in real time.
-      When odds move in a <strong>statistically unusual</strong> way (e.g. a team's odds suddenly shorten by 10%),
-      it creates a <strong>signal</strong> — an alert that something noteworthy happened.
-      These may indicate smart money, insider knowledge, or changing conditions.
-      <div class="row">
+    <div class="explainer">
+      <strong>👋 What am I looking at?</strong> This page watches live World Cup betting odds.
+      When a team's odds move in a <strong>statistically unusual</strong> way — say a team's "win" odds suddenly
+      drop by 10% — Sharp Signal raises a <strong>signal</strong>: a flag that something notable just happened
+      (often <span class="hl-g">smart money</span> moving in, or breaking news).
+      <div class="terms">
         <div class="term">
-          <div class="term-label">Shortening <span class="highlight-green">🟢</span></div>
-          <div class="term-value">Odds getting <strong>smaller</strong> → that outcome is now <strong>more likely</strong></div>
+          <div class="term-label">Shortening 🟢</div>
+          <div>Odds got <strong>smaller</strong> → that outcome is now <strong>more likely</strong></div>
         </div>
         <div class="term">
-          <div class="term-label">Drifting <span class="highlight-red">🔴</span></div>
-          <div class="term-value">Odds getting <strong>bigger</strong> → that outcome is now <strong>less likely</strong></div>
+          <div class="term-label">Drifting 🔴</div>
+          <div>Odds got <strong>bigger</strong> → that outcome is now <strong>less likely</strong></div>
         </div>
         <div class="term">
           <div class="term-label">Confidence</div>
-          <div class="term-value">How unusual the move was (0–100). Higher = more significant.</div>
+          <div>How unusual the move was (0–100). <strong>Higher = more significant.</strong></div>
         </div>
       </div>
     </div>
 
     <div class="hero">
-      <div class="hero-left">
+      <div>
         <div class="label">Prediction Accuracy</div>
         <div class="value na" id="accuracy-value">—</div>
       </div>
@@ -379,48 +203,19 @@
       </div>
     </div>
 
-    <div class="section-title">
-      Live Signals
-      <span class="count" id="signal-count"></span>
-    </div>
-
-    <span class="glossary-toggle" id="glossary-toggle">📖 Show glossary</span>
-    <dl class="glossary" id="glossary">
-      <dt>Signal</dt>
-      <dd>An alert triggered when odds move in a statistically unusual way. Each signal tracks one market (e.g. "over 2.5 goals") for one match.</dd>
-      <dt>Shortening 🟢</dt>
-      <dd>Odds are getting shorter (smaller number) — the market thinks this outcome is becoming more likely.</dd>
-      <dt>Drifting 🔴</dt>
-      <dd>Odds are getting longer (bigger number) — the market thinks this outcome is becoming less likely.</dd>
-      <dt>Confidence</dt>
-      <dd>A score from 0–100 indicating how statistically unusual the odds movement was. Higher confidence = more likely to be a real signal (not random noise).</dd>
-      <dt>Z-score</dt>
-      <dd>A statistical measure of how many standard deviations the latest odds are from the recent average. Higher = more unusual.</dd>
-      <dt>Accuracy</dt>
-      <dd>After matches finish, signals are compared against the actual result. Accuracy = percentage of correct predictions.</dd>
-    </dl>
-
-    <div class="signals-list" id="signals-list">
-      <div class="empty-state">
-        <span class="icon">📡</span>
-        Waiting for signals…
-      </div>
+    <div class="section-title">Live Signals <span class="count" id="signal-count"></span></div>
+    <div id="signals-root">
+      <div class="empty-state"><span class="icon">📡</span>Waiting for signals…</div>
     </div>
 
     <footer>
       <span>Sharp Signal v0.1</span>
-      <span>Data refreshes every 10 seconds</span>
+      <span>Auto-refreshes every 10 seconds</span>
     </footer>
   </div>
 
   <script>
     const $ = (id) => document.getElementById(id);
-
-    document.getElementById('glossary-toggle').addEventListener('click', function() {
-      const g = document.getElementById('glossary');
-      g.classList.toggle('open');
-      this.textContent = g.classList.contains('open') ? '📖 Hide glossary' : '📖 Show glossary';
-    });
 
     function accuracyClass(pct) {
       if (pct === null || pct === undefined) return 'na';
@@ -428,35 +223,25 @@
       if (pct >= 40) return 'mid';
       return 'bad';
     }
-
     function confClass(c) {
       if (c >= 75) return 'high';
       if (c >= 55) return 'mid';
       return 'low';
     }
-
     function confHint(c) {
       if (c >= 75) return 'Very unusual move — high confidence';
       if (c >= 55) return 'Moderate move — medium confidence';
       return 'Minor move — low confidence';
     }
-
     function statusLabel(s) {
-      if (s === 'pending') return '⏳ Awaiting result';
-      if (s === 'correct') return '✅ Correct prediction';
-      return '❌ Wrong prediction';
-    }
-
-    function statusHint(s) {
-      if (s === 'pending') return 'Match hasn\'t finished yet — signal not yet resolved';
-      if (s === 'correct') return 'The odds movement accurately predicted the result';
-      return 'The result went the other way';
+      if (s === 'pending') return '⏳ Pending';
+      if (s === 'correct') return '✅ Correct';
+      return '❌ Wrong';
     }
 
     function marketLabel(m) {
       return m.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
     }
-
     function selectionLabel(s) {
       if (s === 'over') return 'Over';
       if (s === 'under') return 'Under';
@@ -464,7 +249,6 @@
       if (s === 'part2') return 'Away';
       return s;
     }
-
     function timeAgo(iso) {
       if (!iso) return '';
       const diff = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -472,83 +256,85 @@
       if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
       return `${Math.floor(diff / 3600)}h ago`;
     }
+    function kickoffLabel(iso) {
+      if (!iso) return 'Time TBC';
+      const d = new Date(iso);
+      return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
 
     function parseReason(reason, direction) {
       const pctMatch = reason.match(/([\d.]+)%/);
       const zMatch = reason.match(/([\d.]+) standard/);
       const minMatch = reason.match(/in (\d+) (minute|second)/);
-      const pct = pctMatch ? pctMatch[1] : '?';
-      const z = zMatch ? parseFloat(zMatch[1]) : null;
-      const mins = minMatch ? minMatch[1] : '?';
-      const dirLabel = direction === 'shortening' ? 'more likely 🔥' : 'less likely ❄️';
-      return { pct, z, mins, dirLabel };
+      return {
+        pct: pctMatch ? pctMatch[1] : '?',
+        z: zMatch ? parseFloat(zMatch[1]) : null,
+        mins: minMatch ? minMatch[1] : '?',
+        dirLabel: direction === 'shortening' ? 'more likely 🔥' : 'less likely ❄️',
+      };
     }
 
-    function renderSignals(signals) {
-      const el = $('signals-list');
-      const count = $('signal-count');
+    function renderSignals(signals, matches) {
+      const root = $('signals-root');
+      const matchMap = {};
+      (matches || []).forEach(m => { matchMap[m.match_id] = m; });
 
       if (!signals.length) {
-        el.innerHTML = `
-          <div class="empty-state">
-            <span class="icon">📡</span>
-            Waiting for signals…<br>
-            <span style="font-size:13px;color:#484f58;margin-top:6px;display:block">
-              Signals appear when statistically unusual odds movements are detected.
-            </span>
-          </div>`;
-        count.textContent = '';
+        root.innerHTML = `<div class="empty-state"><span class="icon">📡</span>Waiting for signals…<br>
+          <span style="font-size:13px;color:#484f58;margin-top:6px;display:block">
+          Signals appear when statistically unusual odds movements are detected.</span></div>`;
+        $('signal-count').textContent = '';
         return;
       }
-      count.textContent = `(${signals.length} active)`;
+      $('signal-count').textContent = `(${signals.length} active)`;
 
-      el.innerHTML = signals.map(s => {
-        const p = parseReason(s.reason, s.direction);
-        const zDisplay = p.z !== null ? `z-score ${p.z.toFixed(1)}` : '';
-        return `
-        <div class="signal-card">
-          <div class="signal-top">
-            <div class="confidence-badge ${confClass(s.confidence)}" title="${confHint(s.confidence)}">
-              ${Math.round(s.confidence)}
-            </div>
-            <div>
-              <div class="signal-header">
+      // group by match_id
+      const groups = {};
+      signals.forEach(s => { (groups[s.match_id] = groups[s.match_id] || []).push(s); });
+
+      root.innerHTML = Object.keys(groups).map(matchId => {
+        const meta = matchMap[matchId];
+        const head = meta
+          ? `<span class="teams">${meta.home_team}<span class="vs">vs</span>${meta.away_team}</span>
+             <span class="competition-tag">${meta.competition}</span>
+             <span class="kickoff">⏰ ${kickoffLabel(meta.start_time)}</span>`
+          : `<span class="teams">Match #${matchId}</span>`;
+        const cards = groups[matchId].map(s => {
+          const p = parseReason(s.reason, s.direction);
+          const zDisplay = p.z !== null ? `${p.z.toFixed(1)}σ` : '';
+          return `
+          <div class="signal-card">
+            <div class="confidence-badge ${confClass(s.confidence)}" title="${confHint(s.confidence)}">${Math.round(s.confidence)}</div>
+            <div class="signal-body">
+              <div class="signal-line1">
                 <span class="market-tag">${marketLabel(s.market)}</span>
-                <span class="match-id">Match #${s.match_id}</span>
-              </div>
-              <div>
                 <span class="selection">${selectionLabel(s.selection)}</span>
                 <span class="direction ${s.direction}">${s.direction}</span>
-                <span style="font-size:13px;color:#8b949e;margin-left:6px">odds @ ${s.odds_value.toFixed(2)}</span>
+                <span class="odds-val">@ ${s.odds_value.toFixed(2)}</span>
               </div>
-              <div class="signal-details">
-                <span class="signal-detail-item"><span class="label">Move:</span> ${p.pct}%</span>
-                <span class="signal-detail-item"><span class="label">Over:</span> ${p.mins} min</span>
-                ${zDisplay ? `<span class="signal-detail-item"><span class="label">${zDisplay}</span></span>` : ''}
-                <span class="signal-detail-item"><span class="label">Outlook:</span> ${p.dirLabel}</span>
+              <div class="signal-line2">
+                <span><span class="label">Move</span>${p.pct}%</span>
+                <span><span class="label">Window</span>${p.mins} min</span>
+                ${zDisplay ? `<span><span class="label">Z</span>${zDisplay}</span>` : ''}
+                <span><span class="label">Outlook</span>${p.dirLabel}</span>
+              </div>
+              <div class="reason">
+                <strong>📊 What happened:</strong> The odds for <strong>${selectionLabel(s.selection)}</strong>
+                moved <strong>${p.pct}%</strong> in ${p.mins} minutes${p.z !== null ? ` — that's ${p.z.toFixed(1)} standard deviations from its recent average` : ''}.
+                This is ${s.confidence >= 75 ? 'a highly unusual' : s.confidence >= 55 ? 'a moderately unusual' : 'a minor'} movement.
               </div>
             </div>
-            <div class="status-badge-row">
-              <span class="status-badge ${s.status}" title="${statusHint(s.status)}">${statusLabel(s.status)}</span>
-            </div>
-          </div>
-          <div class="reason">
-            <strong>📊 What happened:</strong> The odds for <strong>${selectionLabel(s.selection)}</strong> moved
-            <strong>${p.pct}%</strong> in ${p.mins} minutes${p.z !== null ? ` — that's ${p.z.toFixed(1)} standard deviations from the recent average` : ''}.
-            This is ${s.confidence >= 75 ? 'a highly unusual' : s.confidence >= 55 ? 'a moderately unusual' : 'a minor'} movement.
-          </div>
-        </div>`;
+            <span class="status-badge ${s.status}">${statusLabel(s.status)}</span>
+          </div>`;
+        }).join('');
+        return `<div class="match-group"><div class="match-head">${head}</div><div class="signals-list">${cards}</div></div>`;
       }).join('');
     }
 
     function renderAccuracy(data) {
       const pct = data.overall_accuracy_pct;
       const el = $('accuracy-value');
-      if (data.total_resolved > 0) {
-        el.textContent = `${pct.toFixed(1)}%`;
-      } else {
-        el.textContent = '—';
-      }
+      el.textContent = data.total_resolved > 0 ? `${pct.toFixed(1)}%` : '—';
       el.className = `value ${accuracyClass(pct)}`;
       $('total-resolved').textContent = data.total_resolved;
       $('correct-count').textContent = data.correct;
@@ -557,15 +343,17 @@
 
     async function refresh() {
       try {
-        const [sigRes, accRes] = await Promise.all([
-          fetch('/signals?limit=50'),
+        const [sigRes, accRes, matchRes] = await Promise.all([
+          fetch('/signals?limit=100'),
           fetch('/accuracy'),
+          fetch('/matches'),
         ]);
         const sigData = await sigRes.json();
         const accData = await accRes.json();
-        renderSignals(sigData.signals || []);
+        const matchData = await matchRes.json();
+        renderSignals(sigData.signals || [], matchData.matches || []);
         renderAccuracy(accData);
-        $('last-updated').innerHTML = `🔄 ${new Date().toLocaleTimeString()}`;
+        $('last-updated').textContent = `🔄 Updated ${new Date().toLocaleTimeString()}`;
       } catch (e) {
         console.error('Refresh failed:', e);
       }

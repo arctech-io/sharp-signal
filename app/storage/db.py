@@ -9,6 +9,7 @@ from app.config import settings
 from app.storage.models import (
     AccuracyStats,
     MarketAccuracy,
+    MatchMeta,
     MatchOutcome,
     Signal,
     SignalDirection,
@@ -62,6 +63,19 @@ class MatchOutcomeRow(Base):
     away_goals = Column(Integer, nullable=False)
     winner = Column(String, nullable=False)  # "home" | "away" | "draw"
     recorded_at = Column(DateTime, nullable=False)
+
+
+class MatchRow(Base):
+    """Cached fixture metadata so dashboards can show team names."""
+
+    __tablename__ = "matches"
+
+    match_id = Column(String, primary_key=True)
+    home_team = Column(String, nullable=False)
+    away_team = Column(String, nullable=False)
+    competition = Column(String, nullable=False)
+    start_time = Column(DateTime, nullable=True)
+    updated_at = Column(DateTime, server_default=func.now())
 
 
 # ---------------------------------------------------------------------------
@@ -279,6 +293,42 @@ def get_match_outcome(db: Session, match_id: str) -> "MatchOutcome | None":
         winner=row.winner,
         recorded_at=row.recorded_at,
     )
+
+
+def save_match(db: Session, meta: "MatchMeta") -> None:
+    """Upsert fixture metadata keyed by match_id."""
+    existing = db.query(MatchRow).filter_by(match_id=meta.match_id).one_or_none()
+    if existing:
+        existing.home_team = meta.home_team
+        existing.away_team = meta.away_team
+        existing.competition = meta.competition
+        existing.start_time = meta.start_time
+    else:
+        db.add(
+            MatchRow(
+                match_id=meta.match_id,
+                home_team=meta.home_team,
+                away_team=meta.away_team,
+                competition=meta.competition,
+                start_time=meta.start_time,
+            )
+        )
+    db.commit()
+
+
+def get_all_matches(db: Session) -> list["MatchMeta"]:
+    """Return all cached fixture metadata."""
+    rows = db.query(MatchRow).order_by(MatchRow.start_time.asc()).all()
+    return [
+        MatchMeta(
+            match_id=r.match_id,
+            home_team=r.home_team,
+            away_team=r.away_team,
+            competition=r.competition,
+            start_time=r.start_time,
+        )
+        for r in rows
+    ]
 
 
 def get_accuracy_stats(db: Session) -> AccuracyStats:

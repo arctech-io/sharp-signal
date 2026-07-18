@@ -9,10 +9,11 @@ from sqlalchemy.orm import Session
 from app.storage.db import (
     SignalRow,
     get_accuracy_stats,
+    get_all_matches,
     get_db,
     get_recent_signals,
 )
-from app.storage.models import Signal, SignalDirection, SignalStatus
+from app.storage.models import MatchMeta, Signal, SignalDirection, SignalStatus
 
 router = APIRouter()
 
@@ -74,3 +75,13 @@ async def accuracy_stats(db: Session = Depends(get_db)):
     """Return overall and per-market accuracy stats."""
     stats = get_accuracy_stats(db)
     return stats.model_dump(mode="json")
+
+
+@router.get("/matches")
+async def list_matches(db: Session = Depends(get_db)):
+    """List cached fixture metadata (team names, competition, kickoff)."""
+    matches = get_all_matches(db)
+    return {
+        "total": len(matches),
+        "matches": [m.model_dump(mode="json") for m in matches],
+    }

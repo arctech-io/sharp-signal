@@ -52,6 +52,16 @@ class MatchOutcome(BaseModel):
     recorded_at: datetime | None = None
 
 
+class MatchMeta(BaseModel):
+    """Human-readable metadata for a fixture from TxLINE."""
+
+    match_id: str
+    home_team: str
+    away_team: str
+    competition: str
+    start_time: datetime | None = None
+
+
 class MarketAccuracy(BaseModel):
     """Accuracy breakdown for a single market type."""
 
