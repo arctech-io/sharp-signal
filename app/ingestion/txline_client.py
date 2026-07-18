@@ -16,6 +16,34 @@ BACKOFF_BASE = 1.0
 BACKOFF_CAP = 60.0
 RATE_LIMIT_DELAY = 0.5  # seconds between fixture odds requests
 
+# Only ingest markets the resolver can actually score against a final result
+# (1X2 match result and Over/Under total). Asian Handicap and other markets
+# depend on the handicap line / period and cannot be resolved from a simple
+# final score, so they would pollute the accuracy tracker if ingested.
+RESOLVABLE_MARKETS = {
+    "1X2_PARTICIPANT_RESULT",
+    "OVERUNDER_PARTICIPANT_GOALS",
+}
+
+
+def _is_resolvable_market(super_odds_type: str) -> bool:
+    """Return True if the market can be scored against a final result.
+
+    Resolvable markets are 1X2 match result and Over/Under totals. Asian
+    Handicap (and any other handicap-style market) is excluded because it
+    depends on the handicap line and cannot be resolved from a simple final
+    score, so ingesting it would pollute the accuracy tracker.
+    """
+    t = super_odds_type.lower()
+    if "handicap" in t:
+        return False
+    return ("1x2" in t or "participant_result" in t) or (
+        "over" in t and "under" in t
+    )
+
+
+
+
 
 class TxLineError(Exception):
     """Raised when the TxLINE API returns a non-retryable error."""
@@ -237,7 +265,17 @@ class TxLineClient:
                 )
                 continue
 
-            all_odds.extend(_normalize_odds(fixture_id, odds_list))
+            # Only ingest markets we can resolve against a final result.
+            # Match on normalized substrings so both short forms
+            # ("1X2", "Over/Under 2.5") and canonical forms
+            # ("1X2_PARTICIPANT_RESULT", "OVERUNDER_PARTICIPANT_GOALS")
+            # pass, while Asian Handicap and other unresolvable markets
+            # (which depend on the handicap line) are dropped.
+            resolvable = [
+                o for o in odds_list
+                if _is_resolvable_market(o.get("SuperOddsType", ""))
+            ]
+            all_odds.extend(_normalize_odds(fixture_id, resolvable))
 
         return all_odds
 

@@ -37,6 +37,7 @@ async def health_check():
         _poll_status,
         _startup_ts,
     )
+    from app.config import settings as _settings
 
     last_poll = _get_last_poll()
     return {
@@ -45,6 +46,7 @@ async def health_check():
         "last_successful_poll": last_poll.isoformat() if last_poll else None,
         "poll_status": _poll_status,
         "poll_detail": _poll_detail,
+        "demo_seed": _settings.sharp_demo_seed,
     }
 
 

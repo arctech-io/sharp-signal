@@ -111,10 +111,6 @@ async def resolve_signals_for_match(
     if not pending:
         return 0
 
-    logger.info(
-        "Resolving %d pending signals for match %s", len(pending), match_id
-    )
-
     # Try to get the scores snapshot from TxLINE
     try:
         scores_data = await client.get_scores_snapshot(match_id)
@@ -138,7 +134,24 @@ async def resolve_signals_for_match(
         )
         return 0
 
-    # Persist the outcome
+    return resolve_signals_with_outcome(db, match_id, outcome)
+
+
+def resolve_signals_with_outcome(
+    db: Session,
+    match_id: str,
+    outcome: MatchOutcome,
+) -> int:
+    """Resolve all pending signals for *match_id* against a known *outcome*.
+
+    Shared by the live resolver (outcome from TxLINE) and the demo seeder
+    (outcome supplied synthetically). Returns the number of signals resolved.
+    """
+    pending = get_pending_signals_for_match(db, match_id)
+    if not pending:
+        return 0
+
+    # Persist the outcome (idempotent — re-saving the same match is fine)
     save_match_outcome(db, outcome)
     logger.info(
         "Recorded outcome for match %s: %d-%d (%s)",
@@ -170,6 +183,45 @@ async def resolve_signals_for_match(
             )
 
     return resolved_count
+
+
+# ---------------------------------------------------------------------------
+# Demo seed mode
+# ---------------------------------------------------------------------------
+
+# Final results replayed when SHARP_DEMO_SEED is enabled, so the accuracy
+# panel has something to show even though the dev TxLINE feed never emits a
+# finalised score. Clearly synthetic — DO NOT enable in production.
+DEMO_OUTCOMES: dict[str, tuple[int, int]] = {
+    "18257865": (0, 4),  # France 0 - 4 England  (winner: away)
+    "18257739": (2, 1),  # Spain 2 - 1 Argentina  (winner: home)
+}
+
+
+def seed_demo_outcomes(db: Session) -> int:
+    """Resolve pending signals against synthetic final scores (demo only).
+
+    Returns the total number of signals resolved. Idempotent: it only acts on
+    signals still in 'pending' and a match is resolved at most once (once
+    signals are resolved there is nothing left to do).
+    """
+    total = 0
+    for match_id, (home_goals, away_goals) in DEMO_OUTCOMES.items():
+        winner = "home" if home_goals > away_goals else ("away" if away_goals > home_goals else "draw")
+        outcome = MatchOutcome(
+            match_id=match_id,
+            home_goals=home_goals,
+            away_goals=away_goals,
+            winner=winner,
+            recorded_at=datetime.now(timezone.utc),
+        )
+        try:
+            total += resolve_signals_with_outcome(db, match_id, outcome)
+        except Exception:
+            logger.exception("Demo seed failed for match %s", match_id)
+    if total:
+        logger.info("Demo seed resolved %d signals", total)
+    return total
 
 
 def _parse_match_outcome(match_id: str, scores_data: list[dict]) -> MatchOutcome | None:

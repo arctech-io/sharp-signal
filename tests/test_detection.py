@@ -532,3 +532,26 @@ class TestDetectionEngine:
             odds_value=1.95, timestamp=_ts(6),
         ))
         assert shorten is not None and shorten.direction == SignalDirection.DRIFTING
+
+
+class TestPlausibilityGuards:
+    def test_excessive_single_step_move_suppressed(self):
+        """A >100% single-step move on the same line is feed noise — suppressed."""
+        engine = DetectionEngine(DetectionConfig(
+            pct_change_threshold=5.0, z_score_threshold=2.0, min_window_size=3,
+            max_signal_pct_change=100.0,
+        ))
+        for i in range(5):
+            engine.process(OddsUpdate(match_id="M1", market="1X2", selection="Home", odds_value=2.00, timestamp=_ts(i)))
+        sig = engine.process(OddsUpdate(match_id="M1", market="1X2", selection="Home", odds_value=6.50, timestamp=_ts(5)))
+        assert sig is None
+
+    def test_reasonable_move_still_fires(self):
+        engine = DetectionEngine(DetectionConfig(
+            pct_change_threshold=5.0, z_score_threshold=2.0, min_window_size=3,
+            max_signal_pct_change=100.0,
+        ))
+        for i in range(5):
+            engine.process(OddsUpdate(match_id="M1", market="1X2", selection="Home", odds_value=2.00, timestamp=_ts(i)))
+        sig = engine.process(OddsUpdate(match_id="M1", market="1X2", selection="Home", odds_value=2.40, timestamp=_ts(5)))
+        assert sig is not None

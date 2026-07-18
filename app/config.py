@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     rolling_window_size: int = 20
     min_window_size: int = 5
     signal_cooldown_seconds: int = 600
+    sharp_demo_seed: bool = False
 
 
 settings = Settings()

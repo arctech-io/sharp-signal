@@ -13,7 +13,7 @@ from fastapi.responses import HTMLResponse
 from app.api.routes import router
 from app.config import settings
 from app.detection.engine import DetectionConfig, DetectionEngine
-from app.detection.resolver import resolve_all_pending
+from app.detection.resolver import resolve_all_pending, seed_demo_outcomes
 from app.ingestion.txline_client import TxLineClient, TxLineError
 from app.storage import init_db, save_odds_update, save_signal
 from app.storage.db import SessionLocal
@@ -91,6 +91,42 @@ def _cache_fixtures(fixtures: list[dict]) -> None:
         db.close()
 
 
+def _filter_exclusive_shortening(signals: list) -> list:
+    """Enforce that a mutually-exclusive market has at most one "shortening" signal.
+
+    In markets like 1X2 (Home/Draw/Away) the outcomes are competitors: if one
+    becomes more likely, the others must become less likely. The per-selection
+    detector can flag several as "shortening" when the whole market swings, which
+    is physically impossible (implied probabilities can't all rise). Keep only
+    the single strongest "shortening" signal per market; drop the rest.
+    """
+    from app.detection.engine import SignalDirection
+
+    shortening_by_market: dict[str, list] = {}
+    others: list = []
+    for s in signals:
+        if s.direction == SignalDirection.SHORTENING:
+            shortening_by_market.setdefault(s.market, []).append(s)
+        else:
+            others.append(s)
+
+    kept: list = list(others)
+    for market, group in shortening_by_market.items():
+        if len(group) <= 1:
+            kept.extend(group)
+        else:
+            # Keep only the most confident; log the contradiction.
+            group.sort(key=lambda x: x.confidence, reverse=True)
+            kept.append(group[0])
+            logger.warning(
+                "Market '%s' had %d selections simultaneously 'shortening' — "
+                "kept only %s (conf %.1f), dropped %d contradictory signals",
+                market, len(group), group[0].selection, group[0].confidence,
+                len(group) - 1,
+            )
+    return kept
+
+
 async def _poll_cycle(engine: DetectionEngine) -> None:
     """Run one ingestion → detection cycle.  Never raises."""
     global _last_successful_poll
@@ -150,8 +186,10 @@ async def _poll_cycle(engine: DetectionEngine) -> None:
 
         logger.info("Received %d odds updates", len(odds_updates))
 
-        # Run detection and persist
+        # Run detection for the whole cycle, collecting signals so we can
+        # apply cross-selection plausibility rules before persisting.
         db = SessionLocal()
+        cycle_signals: list = []
         signals_created = 0
         try:
             for update in odds_updates:
@@ -162,19 +200,7 @@ async def _poll_cycle(engine: DetectionEngine) -> None:
                     # Run detection
                     signal = engine.process(update)
                     if signal is not None:
-                        save_signal(db, signal)
-                        signals_created += 1
-                        logger.info(
-                            "Signal created: id=%s match=%s market=%s selection=%s "
-                            "direction=%s confidence=%.1f reason=%s",
-                            signal.id,
-                            signal.match_id,
-                            signal.market,
-                            signal.selection,
-                            signal.direction.value,
-                            signal.confidence,
-                            signal.reason,
-                        )
+                        cycle_signals.append(signal)
                 except Exception:
                     logger.exception(
                         "Error processing update for match=%s market=%s selection=%s",
@@ -182,13 +208,29 @@ async def _poll_cycle(engine: DetectionEngine) -> None:
                         update.market,
                         update.selection,
                     )
+
+            # Drop physically-impossible signals: in a mutually-exclusive market
+            # (e.g. 1X2) at most one selection can be "shortening" (more likely)
+            # at once. If several are, keep only the strongest.
+            cycle_signals = _filter_exclusive_shortening(cycle_signals)
+            for signal in cycle_signals:
+                save_signal(db, signal)
+                signals_created += 1
+                logger.info(
+                    "Signal created: id=%s match=%s market=%s selection=%s "
+                    "direction=%s confidence=%.1f reason=%s",
+                    signal.id, signal.match_id, signal.market, signal.selection,
+                    signal.direction.value, signal.confidence, signal.reason,
+                )
         finally:
             db.close()
 
-        # Resolve any pending signals
+        # Resolve any pending signals (live feed + optional demo seed)
         resolve_db = SessionLocal()
         try:
             resolved = await resolve_all_pending(client, resolve_db)
+            if settings.sharp_demo_seed:
+                resolved += seed_demo_outcomes(resolve_db)
         except Exception:
             logger.exception("Error during signal resolution")
             resolved = 0

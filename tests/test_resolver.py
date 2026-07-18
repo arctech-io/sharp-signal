@@ -15,7 +15,7 @@ from app.detection.resolver import (
     resolve_signals_for_match,
 )
 from app.ingestion.txline_client import TxLineError
-from app.storage.db import Base, get_pending_signals, save_signal
+from app.storage.db import Base, get_pending_signals, save_signal, get_accuracy_stats
 from app.storage.models import (
     MatchOutcome,
     Signal,
@@ -318,3 +318,40 @@ class TestResolveAllPending:
         client.get_scores_snapshot = AsyncMock(side_effect=side_effect)
         total = await resolve_all_pending(client, db_session)
         assert total == 1
+
+
+class TestExclusiveShortening:
+    def test_only_strongest_shortening_kept_per_market(self):
+        from app.main import _filter_exclusive_shortening
+        from app.storage.models import Signal, SignalDirection
+
+        signals = [
+            Signal(match_id="M1", market="1X2_PARTICIPANT_RESULT", selection="part1",
+                   odds_value=85.0, confidence=90.0, direction=SignalDirection.SHORTENING, reason="h"),
+            Signal(match_id="M1", market="1X2_PARTICIPANT_RESULT", selection="draw",
+                   odds_value=35.0, confidence=70.0, direction=SignalDirection.SHORTENING, reason="d"),
+            Signal(match_id="M1", market="1X2_PARTICIPANT_RESULT", selection="part2",
+                   odds_value=1.0, confidence=60.0, direction=SignalDirection.DRIFTING, reason="a"),
+        ]
+        kept = _filter_exclusive_shortening(signals)
+        # Only one shortening (part1, the strongest) should survive; draw's
+        # contradictory shortening is dropped; the drifting one stays.
+        shortenings = [s for s in kept if s.direction == SignalDirection.SHORTENING]
+        assert len(shortenings) == 1
+        assert shortenings[0].selection == "part1"
+        assert len(kept) == 2
+
+
+class TestDemoSeed:
+    def test_seed_resolves_pending_signals(self, db_session):
+        from app.detection.resolver import seed_demo_outcomes
+        # France (18257865) 0-4 England: a Home "shortening" should be INCORRECT.
+        save_signal(db_session, _make_pending_signal(
+            match_id="18257865", selection="part1",
+            direction=SignalDirection.SHORTENING))
+        resolved = seed_demo_outcomes(db_session)
+        assert resolved == 1
+        stats = get_accuracy_stats(db_session)
+        assert stats.total_resolved == 1
+        assert stats.incorrect == 1
+        assert stats.correct == 0

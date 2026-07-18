@@ -121,6 +121,12 @@
     .hero .metric-value.mid  { color: var(--amber); }
     .hero .metric-value.bad  { color: var(--red); }
     .hero .metric-value.na   { color: var(--text-faint); }
+    .demo-badge {
+      display: inline-block; margin-top: 10px; font-size: 10.5px; font-weight: 600;
+      letter-spacing: 0.05em; text-transform: uppercase; color: var(--amber);
+      background: rgba(227,179,65,0.12); border: 1px solid rgba(227,179,65,0.3);
+      padding: 3px 9px; border-radius: 20px;
+    }
     .hero-stats { display: flex; gap: 36px; }
     .hero-stats .stat .n { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
     .hero-stats .stat .k { font-size: 11px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
@@ -334,6 +340,7 @@
       <div>
         <div class="metric-label">Prediction Accuracy</div>
         <div class="metric-value na" id="accuracy-value">—</div>
+        <div class="demo-badge" id="demo-badge" style="display:none;">Demo seed data</div>
       </div>
       <div class="hero-stats">
         <div class="stat">
@@ -497,6 +504,9 @@
     }
 
     function renderStatus(health) {
+      // Demo seed indicator (honest labelling of synthetic results)
+      $('demo-badge').style.display = (health.demo_seed) ? 'inline-block' : 'none';
+
       const pill = $('last-updated');
       const banner = $('status-banner');
       const status = health.poll_status || 'starting';

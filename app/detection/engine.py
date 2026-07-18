@@ -28,6 +28,9 @@ class DetectionConfig:
     rolling_window_size: int = 20
     min_window_size: int = 5
     signal_cooldown_seconds: int = 600
+    # Plausibility guards — suppress degenerate signals from a noisy feed.
+    max_signal_pct_change: float = 100.0  # single-step move above this is treated as feed noise
+    z_display_cap: float = 9.9  # clamp z used for confidence + display so numbers stay believable
 
 
 # ---------------------------------------------------------------------------
@@ -213,16 +216,26 @@ def check_for_signal(
     pct = percent_change(prev, new_odds)
     z = abs(z_score(new_odds, mean, std))
 
+    # Plausibility guard: a single-step move this large on the same bet line
+    # is feed noise, not a real market move. Suppress it outright.
+    if pct > config.max_signal_pct_change:
+        return None
+
     pct_crossed = pct >= config.pct_change_threshold
     z_crossed = z >= config.z_score_threshold
 
     if not (pct_crossed or z_crossed):
         return None
 
-    direction = determine_direction(prev, new_odds)
-    confidence = compute_confidence(pct, z, config.pct_change_threshold, config.z_score_threshold)
+    # Clamp the stats used for confidence + display so volatile feeds don't
+    # produce unbelievable numbers (e.g. 37.9σ).
+    z_capped = min(z, config.z_display_cap)
+    pct_capped = min(pct, config.max_signal_pct_change)
 
-    reason = build_reason(pct, z, direction, n)
+    direction = determine_direction(prev, new_odds)
+    confidence = compute_confidence(pct_capped, z_capped, config.pct_change_threshold, config.z_score_threshold)
+
+    reason = build_reason(pct_capped, z_capped, direction, n)
 
     return Signal(
         id=str(uuid.uuid4()),
