@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.ingestion.txline_client import TxLineClient, TxLineError
 from app.storage.db import (
+    get_all_matches,
     get_match_outcome,
     get_pending_match_ids,
     get_pending_signals_for_match,
@@ -197,6 +198,32 @@ DEMO_OUTCOMES: dict[str, tuple[int, int]] = {
     "18257739": (2, 1),  # Spain 2 - 1 Argentina  (winner: home)
 }
 
+# Team-name fallback so the seed still resolves even if the live feed emits a
+# different fixture ID than the ones hardcoded above.
+DEMO_TEAM_MATCHES: dict[tuple[str, str], tuple[int, int]] = {
+    ("France", "England"): (0, 4),
+    ("Spain", "Argentina"): (2, 1),
+}
+
+
+def _resolve_demo_match(db: Session, match_id: str, home_goals: int, away_goals: int) -> int:
+    winner = (
+        "home" if home_goals > away_goals
+        else ("away" if away_goals > home_goals else "draw")
+    )
+    outcome = MatchOutcome(
+        match_id=match_id,
+        home_goals=home_goals,
+        away_goals=away_goals,
+        winner=winner,
+        recorded_at=datetime.now(timezone.utc),
+    )
+    try:
+        return resolve_signals_with_outcome(db, match_id, outcome)
+    except Exception:
+        logger.exception("Demo seed failed for match %s", match_id)
+        return 0
+
 
 def seed_demo_outcomes(db: Session) -> int:
     """Resolve pending signals against synthetic final scores (demo only).
@@ -204,21 +231,30 @@ def seed_demo_outcomes(db: Session) -> int:
     Returns the total number of signals resolved. Idempotent: it only acts on
     signals still in 'pending' and a match is resolved at most once (once
     signals are resolved there is nothing left to do).
+
+    Matches primarily on the hardcoded fixture IDs, but falls back to team
+    names so the seed works regardless of which fixture ID the live feed
+    actually emits.
     """
     total = 0
+
+    # Primary: hardcoded fixture IDs.
     for match_id, (home_goals, away_goals) in DEMO_OUTCOMES.items():
-        winner = "home" if home_goals > away_goals else ("away" if away_goals > home_goals else "draw")
-        outcome = MatchOutcome(
-            match_id=match_id,
-            home_goals=home_goals,
-            away_goals=away_goals,
-            winner=winner,
-            recorded_at=datetime.now(timezone.utc),
-        )
-        try:
-            total += resolve_signals_with_outcome(db, match_id, outcome)
-        except Exception:
-            logger.exception("Demo seed failed for match %s", match_id)
+        pending = get_pending_signals_for_match(db, match_id)
+        if pending:
+            total += _resolve_demo_match(db, match_id, home_goals, away_goals)
+
+    # Fallback: match pending signals by cached team names.
+    meta_by_id = {m.match_id: m for m in get_all_matches(db)}
+    for match_id in get_pending_match_ids(db):
+        meta = meta_by_id.get(match_id)
+        if meta is None:
+            continue
+        key = (meta.home_team, meta.away_team)
+        if key in DEMO_TEAM_MATCHES:
+            home_goals, away_goals = DEMO_TEAM_MATCHES[key]
+            total += _resolve_demo_match(db, match_id, home_goals, away_goals)
+
     if total:
         logger.info("Demo seed resolved %d signals", total)
     return total
