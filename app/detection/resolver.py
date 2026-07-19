@@ -244,20 +244,42 @@ def seed_demo_outcomes(db: Session) -> int:
         if pending:
             total += _resolve_demo_match(db, match_id, home_goals, away_goals)
 
-    # Fallback: match pending signals by cached team names.
+    # Fallback: match pending signals by cached team names (partial,
+    # case-insensitive so "Spain" / "ESP" / "Spain (Q)" all match).
     meta_by_id = {m.match_id: m for m in get_all_matches(db)}
-    for match_id in get_pending_match_ids(db):
+    pending_ids = get_pending_match_ids(db)
+    for match_id in pending_ids:
         meta = meta_by_id.get(match_id)
         if meta is None:
+            logger.debug("Demo seed: match %s has pending signals but no cached metadata", match_id)
             continue
-        key = (meta.home_team, meta.away_team)
-        if key in DEMO_TEAM_MATCHES:
-            home_goals, away_goals = DEMO_TEAM_MATCHES[key]
-            total += _resolve_demo_match(db, match_id, home_goals, away_goals)
+        home, away = (meta.home_team or "").lower(), (meta.away_team or "").lower()
+        matched = None
+        for (h, a), score in DEMO_TEAM_MATCHES.items():
+            if _name_in(home, h) and _name_in(away, a):
+                matched = score
+                break
+            if _name_in(home, a) and _name_in(away, h):
+                # Teams swapped in the feed — flip the score.
+                matched = (score[1], score[0])
+                break
+        if matched:
+            total += _resolve_demo_match(db, match_id, matched[0], matched[1])
 
     if total:
         logger.info("Demo seed resolved %d signals", total)
+    else:
+        logger.debug(
+            "Demo seed resolved 0 signals (pending match ids: %s, cached: %s)",
+            pending_ids,
+            [m.match_id for m in meta_by_id.values()],
+        )
     return total
+
+
+def _name_in(haystack: str, needle: str) -> bool:
+    """Case-insensitive substring match for team-name fallback."""
+    return needle.lower() in haystack.lower()
 
 
 def _parse_match_outcome(match_id: str, scores_data: list[dict]) -> MatchOutcome | None:
