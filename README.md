@@ -53,7 +53,8 @@ pytest -v
 | `GET` | `/health` | Service health — uptime, last successful poll time |
 | `GET` | `/signals?limit=50&status=pending` | Recent signals, newest first. Filter by status: `pending`, `correct`, `incorrect` |
 | `GET` | `/signals/{id}` | Single signal detail |
-| `GET` | `/accuracy` | Aggregate accuracy stats — total resolved, correct count, incorrect count, accuracy percentage |
+| `GET` | `/matches` | All cached fixtures (incl. those with no signals yet) |
+| `GET` | `/accuracy` | Aggregate accuracy stats — total resolved, correct count, incorrect count, accuracy percentage, and a per-market breakdown |
 
 ## TxLINE API Feedback
 
@@ -98,11 +99,11 @@ All settings are loaded from environment variables (or a `.env` file). Copy `.en
 | `MIN_WINDOW_SIZE` | `5` | Minimum data points before detection activates for a market |
 | `SIGNAL_COOLDOWN_SECONDS` | `600` | Suppress a repeated same-direction signal for the same market/selection within this window |
 | `MAX_SIGNAL_PCT_CHANGE` | `100.0` | Suppress a single-step odds move larger than this (feed noise on the same line) |
-| `SHARP_DEMO_SEED` | `false` | If `true`, replay synthetic final scores (France 0–4 England, Spain 2–1 Argentina) so the accuracy panel populates even though the dev feed never emits a finalised result. Clearly synthetic — do **not** enable in production. |
+| `SHARP_DEMO_SEED` | `false` | If `true`, replay the synthetic final score for the already-played fixture (France 0–4 England) so the accuracy panel populates even though the dev feed never emits a finalised result. Upcoming/live fixtures (e.g. Spain vs Argentina) are left untouched and stay Pending. Clearly synthetic — do **not** enable in production. |
 
 ### Demo seed mode
 
-The dev TxLINE feed keeps World Cup matches in `scheduled` status and never emits a `game_finalised` score, so signals stay `Pending` and accuracy stays at 0 in normal operation. For demos, set `SHARP_DEMO_SEED=true` to replay final results and let the resolver populate the accuracy tracker. The dashboard badges this state with a "Demo seed data" pill so it is never mistaken for live results.
+The dev TxLINE feed keeps World Cup matches in `scheduled` status and never emits a `game_finalised` score, so signals stay `Pending` and accuracy stays at 0 in normal operation. For demos, set `SHARP_DEMO_SEED=true` to replay the final result for the already-played fixture (France 0–4 England) and let the resolver populate the accuracy tracker. Only fixtures whose kickoff has passed are resolved — upcoming/live matches (e.g. Spain vs Argentina) remain Pending, demonstrating live ingestion running alongside resolved history. In demo mode the live TxLINE resolver is skipped so the synthetic result is authoritative. The dashboard badges this state with a "Demo seed data" pill so it is never mistaken for live results.
 
 ### Tuning the Thresholds
 
