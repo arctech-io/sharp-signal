@@ -196,16 +196,16 @@ def resolve_signals_with_outcome(
 # Final results replayed when SHARP_DEMO_SEED is enabled, so the accuracy
 # panel has something to show even though the dev TxLINE feed never emits a
 # finalised score. Clearly synthetic — DO NOT enable in production.
+# Only the already-played match (France/England) is seeded; Spain/Argentina
+# has not been played and must stay pending.
 DEMO_OUTCOMES: dict[str, tuple[int, int]] = {
     "18257865": (0, 4),  # France 0 - 4 England  (winner: away)
-    "18257739": (2, 1),  # Spain 2 - 1 Argentina  (winner: home)
 }
 
 # Team-name fallback so the seed still resolves even if the live feed emits a
 # different fixture ID than the ones hardcoded above.
 DEMO_TEAM_MATCHES: dict[tuple[str, str], tuple[int, int]] = {
     ("France", "England"): (0, 4),
-    ("Spain", "Argentina"): (2, 1),
 }
 
 
@@ -309,19 +309,15 @@ def _match_has_started(db: Session, match_id: str) -> bool:
 # live-looking activity to resolve against the demo outcomes above. Clearly
 # synthetic — DO NOT enable in production.
 DEMO_SIGNALS: list[dict] = [
-    # France 0 - 4 England (away win): Away shortens, Home/Draw drift
+    # France 0 - 4 England (away win): Away shortens, Home/Draw drift.
+    # This match is already played, so the seed resolves it. Spain/Argentina
+    # is deliberately excluded — it has not been played yet and must stay
+    # pending until its real kickoff passes.
     {"match_id": "18257865", "market": "1X2", "selection": "Away", "odds_value": 1.85, "direction": "shortening", "confidence": 72.0, "move_pct": 6.2, "window": 14, "z": 4.1},
     {"match_id": "18257865", "market": "1X2", "selection": "Home", "odds_value": 240.0, "direction": "drifting", "confidence": 55.0, "move_pct": 4.1, "window": 16, "z": 3.0},
     {"match_id": "18257865", "market": "1X2", "selection": "Draw", "odds_value": 16.0, "direction": "drifting", "confidence": 48.0, "move_pct": 3.3, "window": 15, "z": 2.6},
     {"match_id": "18257865", "market": "Over/Under 2.5", "selection": "Over", "odds_value": 1.95, "direction": "shortening", "confidence": 60.0, "move_pct": 3.8, "window": 18, "z": 3.3},
     {"match_id": "18257865", "market": "Over/Under 2.5", "selection": "Under", "odds_value": 1.85, "direction": "drifting", "confidence": 52.0, "move_pct": 3.1, "window": 18, "z": 2.7},
-    # Spain 2 - 1 Argentina (home win): most signals point home, but a couple
-    # misread the market so accuracy ends up believable rather than 100%.
-    {"match_id": "18257739", "market": "1X2", "selection": "Home", "odds_value": 2.10, "direction": "shortening", "confidence": 68.0, "move_pct": 5.4, "window": 17, "z": 3.8},
-    {"match_id": "18257739", "market": "1X2", "selection": "Away", "odds_value": 3.40, "direction": "shortening", "confidence": 52.0, "move_pct": 4.0, "window": 16, "z": 2.9},
-    {"match_id": "18257739", "market": "1X2", "selection": "Draw", "odds_value": 3.30, "direction": "drifting", "confidence": 45.0, "move_pct": 2.7, "window": 19, "z": 2.3},
-    {"match_id": "18257739", "market": "Over/Under 2.5", "selection": "Over", "odds_value": 1.90, "direction": "shortening", "confidence": 58.0, "move_pct": 3.6, "window": 20, "z": 3.1},
-    {"match_id": "18257739", "market": "Over/Under 2.5", "selection": "Under", "odds_value": 1.90, "direction": "drifting", "confidence": 49.0, "move_pct": 2.9, "window": 20, "z": 2.5},
 ]
 
 
@@ -332,18 +328,18 @@ def generate_demo_signals(db: Session) -> int:
     signal so re-running poll cycles don't duplicate demo activity. Returns
     the number of demo signals created this call.
     """
-    from app.storage.db import save_match, save_signal
+    from app.storage.db import get_all_matches, save_match, save_signal
 
-    # Ensure the demo fixtures have cached metadata so the dashboard can show
-    # team names even if the live feed hasn't cached them yet. Demo kickoffs
-    # are set in the past so the seed treats them as already played.
+    # Seed cached metadata for the already-played demo match (France/England)
+    # with a past kickoff so the seed resolves it. For the not-yet-played
+    # match (Spain/Argentina) we do NOT force a kickoff — the live feed's real
+    # future kickoff is respected, so its signals correctly stay pending.
     demo_kickoffs = {
         "18257865": datetime(2026, 7, 18, 21, 0, tzinfo=timezone.utc),
-        "18257739": datetime(2026, 7, 18, 21, 0, tzinfo=timezone.utc),
     }
+    cached_ids = {m.match_id for m in get_all_matches(db)}
     for match_id, (home, away) in {
         "18257865": ("France", "England"),
-        "18257739": ("Spain", "Argentina"),
     }.items():
         save_match(
             db,
@@ -353,6 +349,19 @@ def generate_demo_signals(db: Session) -> int:
                 away_team=away,
                 competition="World Cup",
                 start_time=demo_kickoffs[match_id],
+            ),
+        )
+    # Only backfill Spain/Argentina metadata if the live feed hasn't cached it
+    # yet — and leave its kickoff as None so the real (future) one wins later.
+    if "18257739" not in cached_ids:
+        save_match(
+            db,
+            MatchMeta(
+                match_id="18257739",
+                home_team="Spain",
+                away_team="Argentina",
+                competition="World Cup",
+                start_time=None,
             ),
         )
 
