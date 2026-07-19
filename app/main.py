@@ -233,12 +233,13 @@ async def _poll_cycle(engine: DetectionEngine) -> None:
         resolve_db = SessionLocal()
         try:
             if settings.sharp_demo_seed:
-                # Generate synthetic activity so the board has something to
-                # resolve against the demo outcomes, then resolve it.
+                # In demo mode the synthetic outcomes are authoritative, so we
+                # skip the live TxLINE resolver (which may return a conflicting
+                # or partial real score) and resolve purely from the seed.
                 generate_demo_signals(resolve_db)
-            resolved = await resolve_all_pending(client, resolve_db)
-            if settings.sharp_demo_seed:
-                resolved += seed_demo_outcomes(resolve_db)
+                resolved = seed_demo_outcomes(resolve_db)
+            else:
+                resolved = await resolve_all_pending(client, resolve_db)
         except Exception:
             logger.exception("Error during signal resolution")
             resolved = 0
