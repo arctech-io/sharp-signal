@@ -442,17 +442,25 @@
       const matchMap = {};
       (matches || []).forEach(m => { matchMap[m.match_id] = m; });
 
-      if (!signals.length) {
+      // Nothing at all (no matches cached, no signals) — global empty state.
+      if (!signals.length && !Object.keys(matchMap).length) {
         root.innerHTML = '<div class="empty">No signals yet. Unusual odds movements will appear here as they are detected.</div>';
         $('signal-count').textContent = '';
         return;
       }
-      $('signal-count').textContent = `${signals.length} active`;
 
       const groups = {};
       signals.forEach(s => { (groups[s.match_id] = groups[s.match_id] || []).push(s); });
 
-      root.innerHTML = Object.keys(groups).map(matchId => {
+      // Also surface cached matches that have no signals yet, so an
+      // upcoming/live match stays visible even between odds updates.
+      const allMatchIds = new Set([
+        ...Object.keys(groups),
+        ...Object.keys(matchMap),
+      ]);
+
+      const totalSignals = signals.length;
+      root.innerHTML = Array.from(allMatchIds).map(matchId => {
         const meta = matchMap[matchId];
         const head = meta
           ? `<span class="match-teams">${meta.home_team}<span class="vs">vs</span>${meta.away_team}</span>
@@ -460,7 +468,7 @@
              <span class="kickoff">${kickoffLabel(meta.start_time)}</span>`
           : `<span class="match-teams">Match ${matchId}</span>`;
 
-        const rows = groups[matchId].map(s => {
+        const rows = (groups[matchId] || []).map(s => {
           const p = parseReason(s.reason, s.direction);
           const z = p.z !== null ? p.z.toFixed(1) + 'σ' : null;
           return `
@@ -489,8 +497,11 @@
           </div>`;
         }).join('');
 
-        return `<div class="match-group"><div class="match-head">${head}</div>${rows}</div>`;
+        const body = rows || '<div class="empty small">No signals yet for this match.</div>';
+        return `<div class="match-group"><div class="match-head">${head}</div>${body}</div>`;
       }).join('');
+
+      $('signal-count').textContent = totalSignals > 0 ? `${totalSignals} active` : '';
     }
 
     function renderAccuracy(data) {
