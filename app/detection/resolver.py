@@ -244,7 +244,7 @@ def seed_demo_outcomes(db: Session) -> int:
     # Primary: hardcoded fixture IDs.
     for match_id, (home_goals, away_goals) in DEMO_OUTCOMES.items():
         pending = get_pending_signals_for_match(db, match_id)
-        if pending:
+        if pending and _match_has_started(db, match_id):
             total += _resolve_demo_match(db, match_id, home_goals, away_goals)
 
     # Fallback: match pending signals by cached team names (partial,
@@ -266,7 +266,7 @@ def seed_demo_outcomes(db: Session) -> int:
                 # Teams swapped in the feed — flip the score.
                 matched = (score[1], score[0])
                 break
-        if matched:
+        if matched and _match_has_started(db, match_id):
             total += _resolve_demo_match(db, match_id, matched[0], matched[1])
 
     if total:
@@ -285,23 +285,43 @@ def _name_in(haystack: str, needle: str) -> bool:
     return needle.lower() in haystack.lower()
 
 
+def _match_has_started(db: Session, match_id: str) -> bool:
+    """Return True if a match's kickoff is in the past (or unknown).
+
+    Prevents the demo seed from resolving a match that hasn't been played
+    yet — a future fixture should stay pending until its kickoff passes.
+    Matches with no cached start_time are treated as started (the live
+    resolver path, where we only act on finalised scores anyway).
+    """
+    now = datetime.now(timezone.utc)
+    for m in get_all_matches(db):
+        if m.match_id == match_id:
+            if m.start_time is None:
+                return True
+            start = m.start_time
+            if start.tzinfo is None:
+                start = start.replace(tzinfo=timezone.utc)
+            return start <= now
+    return True
+
+
 # Synthetic signals replayed when SHARP_DEMO_SEED is enabled, so the board has
 # live-looking activity to resolve against the demo outcomes above. Clearly
 # synthetic — DO NOT enable in production.
 DEMO_SIGNALS: list[dict] = [
     # France 0 - 4 England (away win): Away shortens, Home/Draw drift
-    {"match_id": "18257865", "market": "1X2", "selection": "Away", "odds_value": 1.85, "direction": "shortening", "confidence": 72.0},
-    {"match_id": "18257865", "market": "1X2", "selection": "Home", "odds_value": 240.0, "direction": "drifting", "confidence": 55.0},
-    {"match_id": "18257865", "market": "1X2", "selection": "Draw", "odds_value": 16.0, "direction": "drifting", "confidence": 48.0},
-    {"match_id": "18257865", "market": "Over/Under 2.5", "selection": "Over", "odds_value": 1.95, "direction": "shortening", "confidence": 60.0},
-    {"match_id": "18257865", "market": "Over/Under 2.5", "selection": "Under", "odds_value": 1.85, "direction": "drifting", "confidence": 52.0},
+    {"match_id": "18257865", "market": "1X2", "selection": "Away", "odds_value": 1.85, "direction": "shortening", "confidence": 72.0, "move_pct": 6.2, "window": 14, "z": 4.1},
+    {"match_id": "18257865", "market": "1X2", "selection": "Home", "odds_value": 240.0, "direction": "drifting", "confidence": 55.0, "move_pct": 4.1, "window": 16, "z": 3.0},
+    {"match_id": "18257865", "market": "1X2", "selection": "Draw", "odds_value": 16.0, "direction": "drifting", "confidence": 48.0, "move_pct": 3.3, "window": 15, "z": 2.6},
+    {"match_id": "18257865", "market": "Over/Under 2.5", "selection": "Over", "odds_value": 1.95, "direction": "shortening", "confidence": 60.0, "move_pct": 3.8, "window": 18, "z": 3.3},
+    {"match_id": "18257865", "market": "Over/Under 2.5", "selection": "Under", "odds_value": 1.85, "direction": "drifting", "confidence": 52.0, "move_pct": 3.1, "window": 18, "z": 2.7},
     # Spain 2 - 1 Argentina (home win): most signals point home, but a couple
     # misread the market so accuracy ends up believable rather than 100%.
-    {"match_id": "18257739", "market": "1X2", "selection": "Home", "odds_value": 2.10, "direction": "shortening", "confidence": 68.0},
-    {"match_id": "18257739", "market": "1X2", "selection": "Away", "odds_value": 3.40, "direction": "shortening", "confidence": 52.0},
-    {"match_id": "18257739", "market": "1X2", "selection": "Draw", "odds_value": 3.30, "direction": "drifting", "confidence": 45.0},
-    {"match_id": "18257739", "market": "Over/Under 2.5", "selection": "Over", "odds_value": 1.90, "direction": "shortening", "confidence": 58.0},
-    {"match_id": "18257739", "market": "Over/Under 2.5", "selection": "Under", "odds_value": 1.90, "direction": "drifting", "confidence": 49.0},
+    {"match_id": "18257739", "market": "1X2", "selection": "Home", "odds_value": 2.10, "direction": "shortening", "confidence": 68.0, "move_pct": 5.4, "window": 17, "z": 3.8},
+    {"match_id": "18257739", "market": "1X2", "selection": "Away", "odds_value": 3.40, "direction": "shortening", "confidence": 52.0, "move_pct": 4.0, "window": 16, "z": 2.9},
+    {"match_id": "18257739", "market": "1X2", "selection": "Draw", "odds_value": 3.30, "direction": "drifting", "confidence": 45.0, "move_pct": 2.7, "window": 19, "z": 2.3},
+    {"match_id": "18257739", "market": "Over/Under 2.5", "selection": "Over", "odds_value": 1.90, "direction": "shortening", "confidence": 58.0, "move_pct": 3.6, "window": 20, "z": 3.1},
+    {"match_id": "18257739", "market": "Over/Under 2.5", "selection": "Under", "odds_value": 1.90, "direction": "drifting", "confidence": 49.0, "move_pct": 2.9, "window": 20, "z": 2.5},
 ]
 
 
@@ -315,7 +335,12 @@ def generate_demo_signals(db: Session) -> int:
     from app.storage.db import save_match, save_signal
 
     # Ensure the demo fixtures have cached metadata so the dashboard can show
-    # team names even if the live feed hasn't cached them yet.
+    # team names even if the live feed hasn't cached them yet. Demo kickoffs
+    # are set in the past so the seed treats them as already played.
+    demo_kickoffs = {
+        "18257865": datetime(2026, 7, 18, 21, 0, tzinfo=timezone.utc),
+        "18257739": datetime(2026, 7, 18, 21, 0, tzinfo=timezone.utc),
+    }
     for match_id, (home, away) in {
         "18257865": ("France", "England"),
         "18257739": ("Spain", "Argentina"),
@@ -327,7 +352,7 @@ def generate_demo_signals(db: Session) -> int:
                 home_team=home,
                 away_team=away,
                 competition="World Cup",
-                start_time=None,
+                start_time=demo_kickoffs[match_id],
             ),
         )
 
@@ -351,11 +376,14 @@ def generate_demo_signals(db: Session) -> int:
                 confidence=spec["confidence"],
                 direction=SignalDirection(spec["direction"]),
                 reason=(
-                    f"Odds for {spec['selection']} moved — "
-                    f"{'more' if spec['direction'] == 'shortening' else 'less'} "
-                    f"likely (demo seed)"
+                    f"Odds for {spec['selection']} moved {spec['move_pct']:.1f}% "
+                    f"over {spec['window']} observations — {spec['z']:.1f} standard "
+                    f"deviations from its recent average. This is a "
+                    f"{'highly unusual' if spec['z'] >= 5 else 'moderately unusual'} "
+                    f"movement."
                 ),
                 status=SignalStatus.PENDING,
+                created_at=datetime.now(timezone.utc),
             ),
         )
         created += 1
