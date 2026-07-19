@@ -6,6 +6,7 @@ odds movement direction matched the actual result.
 """
 
 import logging
+import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
@@ -17,9 +18,11 @@ from app.storage.db import (
     get_pending_match_ids,
     get_pending_signals_for_match,
     mark_signal_resolved,
+    save_match,
     save_match_outcome,
+    SignalRow,
 )
-from app.storage.models import MatchOutcome, Signal, SignalDirection, SignalStatus
+from app.storage.models import MatchMeta, MatchOutcome, Signal, SignalDirection, SignalStatus
 
 logger = logging.getLogger(__name__)
 
@@ -280,6 +283,85 @@ def seed_demo_outcomes(db: Session) -> int:
 def _name_in(haystack: str, needle: str) -> bool:
     """Case-insensitive substring match for team-name fallback."""
     return needle.lower() in haystack.lower()
+
+
+# Synthetic signals replayed when SHARP_DEMO_SEED is enabled, so the board has
+# live-looking activity to resolve against the demo outcomes above. Clearly
+# synthetic — DO NOT enable in production.
+DEMO_SIGNALS: list[dict] = [
+    # France 0 - 4 England (away win): Away shortens, Home/Draw drift
+    {"match_id": "18257865", "market": "1X2", "selection": "Away", "odds_value": 1.85, "direction": "shortening", "confidence": 72.0},
+    {"match_id": "18257865", "market": "1X2", "selection": "Home", "odds_value": 240.0, "direction": "drifting", "confidence": 55.0},
+    {"match_id": "18257865", "market": "1X2", "selection": "Draw", "odds_value": 16.0, "direction": "drifting", "confidence": 48.0},
+    {"match_id": "18257865", "market": "Over/Under 2.5", "selection": "Over", "odds_value": 1.95, "direction": "shortening", "confidence": 60.0},
+    {"match_id": "18257865", "market": "Over/Under 2.5", "selection": "Under", "odds_value": 1.85, "direction": "drifting", "confidence": 52.0},
+    # Spain 2 - 1 Argentina (home win): most signals point home, but a couple
+    # misread the market so accuracy ends up believable rather than 100%.
+    {"match_id": "18257739", "market": "1X2", "selection": "Home", "odds_value": 2.10, "direction": "shortening", "confidence": 68.0},
+    {"match_id": "18257739", "market": "1X2", "selection": "Away", "odds_value": 3.40, "direction": "shortening", "confidence": 52.0},
+    {"match_id": "18257739", "market": "1X2", "selection": "Draw", "odds_value": 3.30, "direction": "drifting", "confidence": 45.0},
+    {"match_id": "18257739", "market": "Over/Under 2.5", "selection": "Over", "odds_value": 1.90, "direction": "shortening", "confidence": 58.0},
+    {"match_id": "18257739", "market": "Over/Under 2.5", "selection": "Under", "odds_value": 1.90, "direction": "drifting", "confidence": 49.0},
+]
+
+
+def generate_demo_signals(db: Session) -> int:
+    """Create synthetic pending signals for the demo matches (demo only).
+
+    Idempotent: skips any (match_id, market, selection) that already has a
+    signal so re-running poll cycles don't duplicate demo activity. Returns
+    the number of demo signals created this call.
+    """
+    from app.storage.db import save_match, save_signal
+
+    # Ensure the demo fixtures have cached metadata so the dashboard can show
+    # team names even if the live feed hasn't cached them yet.
+    for match_id, (home, away) in {
+        "18257865": ("France", "England"),
+        "18257739": ("Spain", "Argentina"),
+    }.items():
+        save_match(
+            db,
+            MatchMeta(
+                match_id=match_id,
+                home_team=home,
+                away_team=away,
+                competition="World Cup",
+                start_time=None,
+            ),
+        )
+
+    existing = {
+        (r.match_id, r.market, r.selection)
+        for r in db.query(SignalRow).all()
+    }
+    created = 0
+    for spec in DEMO_SIGNALS:
+        key = (spec["match_id"], spec["market"], spec["selection"])
+        if key in existing:
+            continue
+        save_signal(
+            db,
+            Signal(
+                id=str(uuid.uuid4()),
+                match_id=spec["match_id"],
+                market=spec["market"],
+                selection=spec["selection"],
+                odds_value=spec["odds_value"],
+                confidence=spec["confidence"],
+                direction=SignalDirection(spec["direction"]),
+                reason=(
+                    f"Odds for {spec['selection']} moved — "
+                    f"{'more' if spec['direction'] == 'shortening' else 'less'} "
+                    f"likely (demo seed)"
+                ),
+                status=SignalStatus.PENDING,
+            ),
+        )
+        created += 1
+    if created:
+        logger.info("Demo seed generated %d synthetic signals", created)
+    return created
 
 
 def _parse_match_outcome(match_id: str, scores_data: list[dict]) -> MatchOutcome | None:

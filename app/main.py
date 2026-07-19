@@ -13,7 +13,11 @@ from fastapi.responses import HTMLResponse
 from app.api.routes import router
 from app.config import settings
 from app.detection.engine import DetectionConfig, DetectionEngine
-from app.detection.resolver import resolve_all_pending, seed_demo_outcomes
+from app.detection.resolver import (
+    generate_demo_signals,
+    resolve_all_pending,
+    seed_demo_outcomes,
+)
 from app.ingestion.txline_client import TxLineClient, TxLineError
 from app.storage import init_db, save_odds_update, save_signal
 from app.storage.db import SessionLocal
@@ -228,6 +232,10 @@ async def _poll_cycle(engine: DetectionEngine) -> None:
         # Resolve any pending signals (live feed + optional demo seed)
         resolve_db = SessionLocal()
         try:
+            if settings.sharp_demo_seed:
+                # Generate synthetic activity so the board has something to
+                # resolve against the demo outcomes, then resolve it.
+                generate_demo_signals(resolve_db)
             resolved = await resolve_all_pending(client, resolve_db)
             if settings.sharp_demo_seed:
                 resolved += seed_demo_outcomes(resolve_db)
